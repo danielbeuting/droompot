@@ -1,29 +1,29 @@
-import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises'
+import { readFile, writeFile, mkdir, copyFile, rm } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
 
-const htmlParts = async () => {
-  const chunks = []
-  for (let i = 1; i <= 4; i++) chunks.push(await readFile(new URL(`../v151-source/index.part${i}.html`, import.meta.url), 'utf8'))
-  return chunks.join('')
-}
+const root = new URL('../', import.meta.url)
+const archive = new URL('../v2-approved-ui.tar.gz', import.meta.url)
+const archiveB64 = new URL('../v2-approved-ui.b64', import.meta.url)
+const unpack = new URL('../.v2-approved-ui/', import.meta.url)
+const out = new URL('../dist/v151/', import.meta.url)
 
-await mkdir(new URL('../dist/v151/', import.meta.url), { recursive: true })
-let html = await htmlParts()
-const css = await readFile(new URL('../style.css', import.meta.url), 'utf8')
-const js = await readFile(new URL('../app.js', import.meta.url), 'utf8')
+await rm(unpack, { recursive: true, force: true })
+await mkdir(unpack, { recursive: true })
+await mkdir(out, { recursive: true })
 
-html = html.replace('<head>', '<head>\n  <base href="/v151/">\n  <link rel="stylesheet" href="theme-fixes.css">')
-html = html.replace('<script src="app.js"></script>', '<script src="v151-bootstrap.js"></script>')
+const encoded = (await readFile(archiveB64, 'utf8')).trim()
+await writeFile(archive, Buffer.from(encoded, 'base64'))
+execFileSync('tar', ['-xzf', new URL(archive).pathname, '-C', new URL(unpack).pathname])
+
+const approved = new URL('v151/', unpack)
+const files = ['index.html','app.js','style.css','theme-fixes.css','v151-bootstrap.js','v151-feedback.js']
+await Promise.all(files.map(file => copyFile(new URL(file, approved), new URL(file, out))))
+await copyFile(new URL('feedback-round-1.css', unpack), new URL('../dist/feedback-round-1.css', import.meta.url))
 
 await Promise.all([
-  writeFile(new URL('../dist/v151/index.html', import.meta.url), html),
-  writeFile(new URL('../dist/v151/style.css', import.meta.url), css),
-  writeFile(new URL('../dist/v151/app.js', import.meta.url), js),
-  copyFile(new URL('../v151-bootstrap.js', import.meta.url), new URL('../dist/v151/v151-bootstrap.js', import.meta.url)),
-  copyFile(new URL('../v151-feedback.js', import.meta.url), new URL('../dist/v151/v151-feedback.js', import.meta.url)),
-  copyFile(new URL('../src/theme-fixes.css', import.meta.url), new URL('../dist/v151/theme-fixes.css', import.meta.url)),
-  copyFile(new URL('../droompot-pig.png', import.meta.url), new URL('../dist/v151/droompot-pig.png', import.meta.url)),
-  copyFile(new URL('../noi.jpg', import.meta.url), new URL('../dist/v151/noi.jpg', import.meta.url)),
-  copyFile(new URL('../robin.jpg', import.meta.url), new URL('../dist/v151/robin.jpg', import.meta.url)),
+  copyFile(new URL('../droompot-pig.png', import.meta.url), new URL('droompot-pig.png', out)),
+  copyFile(new URL('../noi.jpg', import.meta.url), new URL('noi.jpg', out)),
+  copyFile(new URL('../robin.jpg', import.meta.url), new URL('robin.jpg', out)),
 ])
 
-console.log('V1.5.1 source app written to dist/v151 with V2 feedback enhancements')
+console.log('Exact feedback ZIP UI integrated into V2 dist/v151')
