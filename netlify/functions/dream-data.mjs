@@ -18,7 +18,7 @@ function publicMedia(supabase, path) {
   return supabase.storage.from('dreampot-media').getPublicUrl(path).data.publicUrl
 }
 
-async function readState(supabase, slug) {
+async function readState(supabase, slug, includePrivate = false) {
   const { data: pot, error: potError } = await supabase.from('dreampots').select('id,child_name,birth_date,theme,photo_path,general_savings_description,is_public').eq('slug', slug).eq('is_public', true).maybeSingle()
   if (potError) throw potError
   if (!pot) return null
@@ -30,12 +30,19 @@ async function readState(supabase, slug) {
   if (goalError) throw goalError
   if (wishError) throw wishError
   if (contributionError) throw contributionError
+  let bankDetails = ''
+  if (includePrivate) {
+    const { data: privateRow, error: privateError } = await supabase.from('dreampot_private_settings').select('bank_details').eq('dreampot_id', pot.id).maybeSingle()
+    if (privateError) throw privateError
+    bankDetails = privateRow?.bank_details || ''
+  }
   const goalById = new Map((goals || []).map(g => [g.id, g.title]))
   return {
     childName: pot.child_name,
     birthDate: pot.birth_date || '',
     theme: pot.theme || 'green',
     photo: publicMedia(supabase, pot.photo_path),
+    bankDetails,
     activeGoal: 0,
     goals: (goals || []).map(g => ({ id: g.id, title: g.title, icon: g.icon || (g.is_general ? '💰' : '🎯'), type: g.is_general ? 'Spaarrekening' : 'Spaardoel', description: g.description || (g.is_general ? pot.general_savings_description || 'Vrij sparen voor later.' : ''), current: Number(g.current_amount || 0), goal: Number(g.target_amount || 1) })),
     wishes: (wishes || []).map(w => ({ id: w.id, title: w.title, price: Number(w.price || 0), link: w.product_url || '', note: w.description || '', image: publicMedia(supabase, w.image_url), emoji: '🎁', claimed: Boolean(w.claimed) })),
@@ -55,6 +62,8 @@ async function writeState(supabase, slug, state) {
   const photo = typeof state.photo === 'string' && state.photo.trim() ? state.photo.trim() : null
   const { error: potError } = await supabase.from('dreampots').update({ child_name: String(state.childName || '').trim() || 'Droompot', birth_date: state.birthDate || null, theme: state.theme || 'green', photo_path: photo }).eq('id', pot.id)
   if (potError) throw potError
+  const { error: privateError } = await supabase.from('dreampot_private_settings').upsert({ dreampot_id: pot.id, bank_details: String(state.bankDetails || '').trim() || null, updated_at: new Date().toISOString() }, { onConflict: 'dreampot_id' })
+  if (privateError) throw privateError
 
   const incomingGoals = Array.isArray(state.goals) ? state.goals : []
   const { data: existingGoals, error: existingGoalError } = await supabase.from('savings_goals').select('id,is_general').eq('dreampot_id', pot.id)
@@ -112,7 +121,7 @@ export default async (req) => {
     const slug = new URL(req.url).searchParams.get('slug') || ''
     if (!slug) return json({ data: null })
     const supabase = client(req)
-    if (req.method === 'GET') return json({ data: await readState(supabase, slug) })
+    if (req.method === 'GET') return json({ data: await readState(supabase, slug, Boolean(req.headers.get('authorization'))) })
     if (req.method === 'PUT') {
       if (!req.headers.get('authorization')) return json({ error: 'Login required' }, 401)
       const result = await writeState(supabase, slug, await req.json())
