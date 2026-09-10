@@ -17,17 +17,18 @@ function Topbar({back='/app'}){
 function Primary({children,...props}){return <button className="primary-btn" {...props}>{children}</button>}
 
 export default function ManageV2(){
-  const { id }=useParams(); const nav=useNavigate()
-  const [session,setSession]=useState(undefined); const [pot,setPot]=useState(undefined); const [goals,setGoals]=useState([]); const [wishes,setWishes]=useState([]); const [contributions,setContributions]=useState([]); const [tab,setTab]=useState('profile'); const [toast,setToast]=useState('')
+  const { id }=useParams()
+  const [session,setSession]=useState(undefined); const [pot,setPot]=useState(undefined); const [privateSettings,setPrivateSettings]=useState(null); const [goals,setGoals]=useState([]); const [wishes,setWishes]=useState([]); const [contributions,setContributions]=useState([]); const [tab,setTab]=useState('profile'); const [toast,setToast]=useState('')
   useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session))},[])
   async function load(){
-    const [{data:p},{data:g},{data:w},{data:c}]=await Promise.all([
+    const [{data:p},{data:priv},{data:g},{data:w},{data:c}]=await Promise.all([
       supabase.from('dreampots').select('*').eq('id',id).single(),
+      supabase.from('dreampot_private_settings').select('bank_details').eq('dreampot_id',id).maybeSingle(),
       supabase.from('savings_goals').select('*').eq('dreampot_id',id).order('sort_order'),
       supabase.from('wishlist_items').select('*').eq('dreampot_id',id).order('sort_order'),
       supabase.from('contributions').select('*').eq('dreampot_id',id).order('created_at',{ascending:false})
     ])
-    setPot(p||null); setGoals((g||[]).sort((a,b)=>Number(a.is_general)-Number(b.is_general)||a.sort_order-b.sort_order)); setWishes(w||[]); setContributions(c||[])
+    setPot(p||null); setPrivateSettings(priv||{bank_details:''}); setGoals((g||[]).sort((a,b)=>Number(a.is_general)-Number(b.is_general)||a.sort_order-b.sort_order)); setWishes(w||[]); setContributions(c||[])
   }
   useEffect(()=>{if(session)load()},[session,id])
   useEffect(()=>{if(pot?.theme)document.documentElement.dataset.theme=pot.theme},[pot?.theme])
@@ -38,23 +39,28 @@ export default function ManageV2(){
   return <main className="app-shell"><section className="screen active"><Topbar/>
     <div className="settings-profile-mini"><div className="avatar" style={pot.photo_path?{backgroundImage:`url(${mediaUrl(pot.photo_path)})`}:undefined}>{pot.photo_path?'':pot.child_name?.[0]}</div><div><p className="mini-label">Droompot van</p><h2>{pot.child_name}</h2></div><button className="icon-btn" onClick={()=>window.location.assign(`/p/${pot.slug}?view=dream`)}>↗</button></div>
     <div className="settings-nav v2-settings-nav">{[['profile','Profiel'],['style','Stijl'],['goals','Spaardoelen'],['wishlist','Verlanglijstje'],['contributions','Bijdragen']].map(([k,l])=><button key={k} className={`settings-tab ${tab===k?'active':''}`} onClick={()=>setTab(k)}>{l}</button>)}</div>
-    {tab==='profile'&&<Profile pot={pot} session={session} saved={saved}/>} {tab==='style'&&<Style pot={pot} saved={saved}/>} {tab==='goals'&&<Goals pot={pot} goals={goals} saved={saved}/>} {tab==='wishlist'&&<Wishlist pot={pot} wishes={wishes} saved={saved}/>} {tab==='contributions'&&<Contributions items={contributions} saved={saved}/>} 
+    {tab==='profile'&&<Profile pot={pot} session={session} bankDetails={privateSettings?.bank_details||''} saved={saved}/>} {tab==='style'&&<Style pot={pot} saved={saved}/>} {tab==='goals'&&<Goals pot={pot} goals={goals} saved={saved}/>} {tab==='wishlist'&&<Wishlist pot={pot} wishes={wishes} saved={saved}/>} {tab==='contributions'&&<Contributions items={contributions} saved={saved}/>} 
     <button className="secondary-btn" onClick={()=>window.location.assign(`/p/${pot.slug}?view=dream`)}>Bekijk publieke Droompot</button>
     {toast&&<div className="toast show">{toast}</div>}
   </section></main>
 }
 
-function Profile({pot,session,saved}){
-  const [form,setForm]=useState({child_name:pot.child_name,birth_date:pot.birth_date||'',bank_details:pot.bank_details||''}); const [file,setFile]=useState(null); const [preview,setPreview]=useState(pot.photo_path?mediaUrl(pot.photo_path):''); const input=useRef()
+function Profile({pot,session,bankDetails,saved}){
+  const [form,setForm]=useState({child_name:pot.child_name,birth_date:pot.birth_date||'',bank_details:bankDetails||''}); const [file,setFile]=useState(null); const [preview,setPreview]=useState(pot.photo_path?mediaUrl(pot.photo_path):''); const input=useRef(); const [error,setError]=useState('')
+  useEffect(()=>{setForm({child_name:pot.child_name,birth_date:pot.birth_date||'',bank_details:bankDetails||''})},[pot.id,bankDetails])
   useEffect(()=>()=>{if(preview?.startsWith('blob:'))URL.revokeObjectURL(preview)},[preview])
-  async function save(e){e.preventDefault();let photo=pot.photo_path
-    if(file){const ext=(file.name.split('.').pop()||'jpg').toLowerCase(); const path=`${session.user.id}/${pot.id}/profile-${Date.now()}.${ext}`; const up=await supabase.storage.from('dreampot-media').upload(path,file,{contentType:file.type}); if(!up.error)photo=path}
-    const {error}=await supabase.from('dreampots').update({child_name:form.child_name.trim(),birth_date:form.birth_date||null,bank_details:form.bank_details.trim()||null,photo_path:photo}).eq('id',pot.id); if(!error)saved()
+  async function save(e){e.preventDefault();setError('');let photo=pot.photo_path
+    if(file){const ext=(file.name.split('.').pop()||'jpg').toLowerCase(); const path=`${session.user.id}/${pot.id}/profile-${Date.now()}.${ext}`; const up=await supabase.storage.from('dreampot-media').upload(path,file,{contentType:file.type}); if(up.error)return setError('De profielfoto kon niet worden opgeslagen.'); photo=path}
+    const potUpdate=await supabase.from('dreampots').update({child_name:form.child_name.trim(),birth_date:form.birth_date||null,photo_path:photo}).eq('id',pot.id)
+    if(potUpdate.error)return setError('De profielgegevens konden niet worden opgeslagen.')
+    const bankUpdate=await supabase.from('dreampot_private_settings').upsert({dreampot_id:pot.id,bank_details:form.bank_details.trim()||null,updated_at:new Date().toISOString()},{onConflict:'dreampot_id'})
+    if(bankUpdate.error)return setError('De bankgegevens konden niet worden opgeslagen.')
+    saved()
   }
   function choose(e){const f=e.target.files?.[0]||null;setFile(f);if(f)setPreview(URL.createObjectURL(f))}
   return <form onSubmit={save}><div className="settings-block"><p className="eyebrow dark">Profiel</p><h2>{pot.child_name}'s Droompot</h2>
     <div className="profile-photo-edit"><div className="profile-photo-circle">{preview?<img src={preview} alt="Profielfoto"/>:<span>{pot.child_name?.[0]||'?'}</span>}</div><div><button type="button" className="secondary-btn compact-upload" onClick={()=>input.current?.click()}>Foto uploaden</button><small>JPG, PNG of WebP</small></div><input ref={input} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={choose}/></div>
-    <label className="field-label">Naam kind</label><input className="text-input" value={form.child_name} onChange={e=>setForm({...form,child_name:e.target.value})}/><label className="field-label">Geboortedatum</label><input className="text-input" type="date" value={form.birth_date} onChange={e=>setForm({...form,birth_date:e.target.value})}/><label className="field-label">Bankgegevens</label><textarea className="text-input textarea" placeholder="Bijv. NL00 BANK 0123 4567 89 t.n.v. ..." value={form.bank_details} onChange={e=>setForm({...form,bank_details:e.target.value})}/><p className="field-help">Deze gegevens zijn alleen zichtbaar in de ouderomgeving en worden niet op de publieke Droompot getoond.</p></div><Primary>Opslaan</Primary></form>
+    <label className="field-label">Naam kind</label><input className="text-input" value={form.child_name} onChange={e=>setForm({...form,child_name:e.target.value})}/><label className="field-label">Geboortedatum</label><input className="text-input" type="date" value={form.birth_date} onChange={e=>setForm({...form,birth_date:e.target.value})}/><label className="field-label">Bankgegevens</label><textarea className="text-input textarea" placeholder="Bijv. NL00 BANK 0123 4567 89 t.n.v. ..." value={form.bank_details} onChange={e=>setForm({...form,bank_details:e.target.value})}/><p className="field-help">Deze gegevens zijn alleen zichtbaar in de ouderomgeving en worden niet op de publieke Droompot getoond.</p>{error&&<p className="product-error">{error}</p>}</div><Primary>Opslaan</Primary></form>
 }
 
 function Style({pot,saved}){
@@ -64,7 +70,7 @@ function Style({pot,saved}){
   return <><div className="settings-block"><p className="eyebrow dark">Stijl</p><h2>Kies de sfeer</h2><p className="field-help top-help">Tik op een stijl om hem direct te bekijken.</p><div className="theme-grid polished-theme-grid">{THEMES.map(([k,label,a,b])=><button type="button" key={k} className={`theme-card polished-theme ${theme===k?'selected':''}`} onClick={()=>setTheme(k)}><span className="theme-preview" style={{background:`linear-gradient(135deg,${a},${b})`}}><i style={{background:a}}/><b style={{background:b}}/></span><strong>{label}</strong>{theme===k&&<em>Geselecteerd ✓</em>}</button>)}</div></div><Primary onClick={save}>Stijl opslaan</Primary></>
 }
 
-function EmojiPicker({value,onChange}){const [open,setOpen]=useState(false);return <div className="emoji-picker"><button type="button" className="emoji-trigger" onClick={()=>setOpen(!open)}>{value||'🎯'}</button>{open&&<div className="emoji-popover">{EMOJIS.map(e=><button type="button" key={e} onClick={()=>{onChange(e);setOpen(false)}}>{e}</button>)}</div>}</div>}
+function EmojiPicker({value,onChange}){const [open,setOpen]=useState(false);return <div className="emoji-picker"><button type="button" className="emoji-trigger" aria-label="Kies emoji" onClick={()=>setOpen(!open)}>{value||'🎯'}</button>{open&&<div className="emoji-popover">{EMOJIS.map(e=><button type="button" key={e} onClick={()=>{onChange(e);setOpen(false)}}>{e}</button>)}</div>}</div>}
 
 function Goals({pot,goals,saved}){
   const ordered=useMemo(()=>[...goals].sort((a,b)=>Number(a.is_general)-Number(b.is_general)||a.sort_order-b.sort_order),[goals]); const [form,setForm]=useState({title:'',icon:'🎯',description:'',current:'0',target:'100'})
