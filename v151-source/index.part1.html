@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="green">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f2ff" />
+  <title>Droompot v1.5.1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app-shell">
+
+    <section id="screen-start" class="screen start-screen active">
+      <div class="start-wrap">
+        <div class="start-brand-pig"><img src="droompot-pig.png" alt="Droompot"></div>
+        <p class="eyebrow">Welkom bij Droompot</p>
+        <h1 id="start-title">Wat wil je bekijken?</h1>
+        <p class="start-copy">Kies of je naar <span class="dynamic-child-name"></span>'s Droompot of naar het verlanglijstje wilt.</p>
+
+        <div class="start-choice-grid">
+          <button class="start-choice dream" id="start-dream-btn">
+            <span class="start-choice-icon pig-choice-icon"><img src="droompot-pig.png" alt=""></span>
+            <span>
+              <strong>Ga naar Droompot</strong>
+              <small>Bekijk spaardoelen en draag bij</small>
+            </span>
+            <b>›</b>
+          </button><button class="start-choice wishlist" id="start-wishlist-btn">
+            <span class="start-choice-icon gift-choice-icon">🎁</span>
+            <span>
+              <strong>Ga naar verlanglijstje</strong>
+              <small>Bekijk cadeaus en wensen</small>
+            </span>
+            <b>›</b>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-home" class="screen">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark pig-brand-mark"><img src="droompot-pig.png" alt="Droompot"></div>
+          <div>
+            <div class="brand-name">Droompot</div>
+            <div class="brand-sub">kleine beetjes, grote dromen</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="open-settings" aria-label="Instellingen">⚙</button>
+          <button class="icon-btn menu-btn" id="open-menu" aria-label="Menu">☰</button>
+        </div>
+      </header>
+
+      <section class="profile-strip">
+        <label class="avatar-wrap" title="Foto wijzigen via instellingen">
+          <div class="avatar" id="child-avatar">R</div>
+        </label>
+        <div class="profile-main">
+          <p class="mini-label">Droompot van</p>
+          <h1 id="child-name-label"><span class="dynamic-child-name"></span></h1>
+          <p class="profile-copy" id="profile-copy">Hier vind je spaardoelen, de spaarrekening en alles waar Noï voor droomt en spaart.</p>
+          <div class="birthday-line" id="birthday-line">3 jaar · over 120 dagen jarig 🎈</div>
+        </div>
+        <div class="pop-star">✦</div>
+      </section>
+      <button class="wishlist-cta" id="home-wishlist-btn">
+        <span>🎁</span>
+        <span><strong>Bekijk het verlanglijstje</strong><small>Of liever een cadeautje geven?</small></span>
+        <b>›</b>
+      </button>
+
+      <section class="goals-area">
+        <div class="goals-title-row">
+          <div>
+            <p class="eyebrow">Waar droomt <span class="dynamic-child-name"></span> van?</p>
+            <h2>Swipe door de spaardoelen</h2>
+          </div>
+          <div class="swipe-hint">← swipe →</div>
+        </div>
+
+        <div id="goals-carousel" class="goals-carousel"></div>
+        <div id="goal-dots" class="goal-dots"></div>
+
+      </section>
+
+      <section class="section give-section">
+        <div class="selected-goal-callout selected-goal-dropdown">
+          <div class="selected-goal-icon" id="give-goal-icon">🚲</div>
+          <div class="selected-goal-copy">
+            <p>Je draagt nu bij aan</p>
+            <strong id="give-goal-name">Nieuwe fiets</strong>
+          </div>
+          <span class="selected-goal-arrow">⌄</span>
+          <select id="goal-selector" class="selected-goal-select" aria-label="Kies een spaardoel"></select>
+        </div>
+
+        <div class="section-head give-heading">
+          <div>
+            <p class="eyebrow dark" id="give-eyebrow">Geef iets voor de nieuwe fiets</p>
+            <h2>Kies een bedrag</h2>
+          </div>
+        </div>
+
+        <div class="amount-grid">
+          <button class="amount-chip" data-amount="5">€ 5</button>
+          <button class="amount-chip" data-amount="10">€ 10</button>
+          <button class="amount-chip selected" data-amount="20">€ 20</button>
+          <button class="amount-chip" data-amount="25">€ 25</button>
+          <button class="amount-chip" data-amount="50">€ 50</button>
+        </div>
+
+        <label class="field-label" for="custom-amount">Of kies een eigen bedrag</label>
+        <div class="money-input-wrap">
+          <span>€</span>
+          <input id="custom-amount" type="number" min="1" step="1" inputmode="decimal" placeholder="0" />
+        </div>
+
+        <div class="donation-mode">
+          <button class="mode-card selected" data-mode="digital">
+            <span class="mode-icon">↗</span>
+            <span><strong>Digitaal geven</strong><small>Doorloop de demo-betaling</small></span>
+          </button>
+          <button class="mode-card" data-mode="cash">
+            <span class="mode-icon">€</span>
+            <span><strong>Contant in de pot</strong><small>Registreer een contante bijdrage</small></span>
+          </button>
+        </div>
+
+        <button class="primary-btn" id="continue-btn">Ik geef € 20</button>
+      </section>
+
+      <section class="section transaction-section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow dark">Samen sparen</p>
+            <h2>Recente bijdragen</h2>
+          </div>
+        </div>
+        <div id="transactions-list" class="transactions-list"></div>
+      </section>
+      <button class="bottom-share-btn" id="bottom-share-btn">
+        <span>↗</span>
+        <strong>Deel link</strong>
+      </button>
+
+    </section>
+
+    <section id="screen-details" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title">Jouw bijdrage</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="section compact">
+        <div class="payment-summary">
+          <p>Je geeft</p>
+          <div class="payment-amount" id="details-amount">€ 20</div>
+          <p id="details-goal-row">voor <strong id="details-goal">Nieuwe fiets</strong></p>
+        </div>
+
+        <label class="field-label" for="giver-name">Je naam</label>
+        <input class="text-input" id="giver-name" type="text" placeholder="Bijv. Oma Els" maxlength="40" />
+
+        <label class="field-label" for="giver-message">Een berichtje <span class="optional">(optioneel)</span></label>
+        <textarea class="text-input textarea" id="giver-message" placeholder="Veel plezier met je droom! ✨" maxlength="120"></textarea>
+
+        <div class="donation-photo-field">
+          <div class="donation-photo-preview" id="donation-photo-preview"><span>+</span></div>
+          <div>
+            <label class="upload-btn" for="donation-photo-upload">Foto toevoegen</label>
+            <input id="donation-photo-upload" type="file" accept="image/*" hidden>
+            <p>Optioneel. Zonder foto tonen we gewoon de eerste letter van je naam.</p>
+          </div>
+        </div>
+
+        <button class="primary-btn" id="to-payment-btn">Verder</button>
+      </section>
+    </section>
+
+    <section id="screen-payment" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="details">←</button>
+        <div class="top-title">Demo betaling</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="section compact">
+        <div class="demo-banner">
+          <strong>DEMO</strong>
+          <span>Er wordt geen echt geld afgeschreven.</span>
+        </div>
+        <div class="checkout-card">
+          <div class="checkout-row" id="checkout-goal-row"><span>Spaardoel</span><strong id="checkout-goal"></strong></div>
+          <div class="checkout-row total"><span>Totaal</span><strong id="checkout-total"></strong></div>
+        </div>
+        <div class="fake-method">
+          <div class="method-logo">iD</div>
+          <div><strong>iDEAL</strong><span>Simulatiebetaling</span></div>
+          <div class="radio checked"></div>
+        </div>
+        <button class="primary-btn" id="fake-pay-btn">Betaal € 20</button>
+        <p class="tiny-note">Dit is uitsluitend een prototype. Er vindt geen financiële transactie plaats.</p>
+      </section>
+    </section>
+
+    <section id="screen-cash" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="details">←</button>
+        <div class="top-title">Contante bijdrage</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="section compact">
+        <div class="cash-hero">
+          <div class="cash-icon">€</div>
+          <h2>Geld in de fysieke pot?</h2>
+          <p>Registreer de contante bijdrage zodat de digitale voortgang ook klopt.</p>
+        </div>
+        <div class="checkout-card">
+          <div class="checkout-row" id="cash-goal-row"><span>Spaardoel</span><strong id="cash-goal"></strong></div>
+          <div class="checkout-row total"><span>Contant bedrag</span><strong id="cash-total"></strong></div>
+        </div>
+        <button class="primary-btn" id="confirm-cash-btn">Contante bijdrage toevoegen</button>
+      </section>
+    </section>
+
+    <section id="screen-success" class="screen">
+      <canvas id="confetti-canvas"></canvas>
+      <div class="success-wrap">
+        <div class="success-icon">✓</div>
+        <p class="eyebrow">YES!</p>
+        <h2 id="success-title">€ 20 toegevoegd 🎉</h2>
+        <p id="success-copy"></p>
+        <div class="success-balance">
+          <span>Nieuwe stand van dit spaardoel</span>
+          <strong id="success-balance"></strong>
+        </div>
+        <button class="primary-btn" id="back-home-btn">Bekijk de Droompot</button>
+      </div>
+    </section>
+
+
+    
