@@ -1,0 +1,25 @@
+/* Fast preview batch: settings readability + stronger theme cards. */
+.v2-settings-nav .settings-tab{
+  font-size:14px!important;
+  font-weight:800!important;
+  padding:12px 15px!important;
+}
+.settings-block>.eyebrow.dark{font-size:12px!important;letter-spacing:.08em}
+.settings-block>h2{font-size:25px!important;line-height:1.08!important;margin-bottom:16px!important}
+.v2-theme-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.v2-theme-grid .theme-card{
+  min-height:92px!important;
+  border-radius:20px!important;
+  padding:14px!important;
+  font-size:13px!important;
+  font-weight:800!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease!important;
+}
+.v2-theme-grid .theme-card:active{transform:scale(.98)}
+.v2-theme-grid .theme-card.selected{box-shadow:0 0 0 3px color-mix(in srgb,var(--primary2) 24%,transparent)!important}
+.v2-theme-grid .theme-swatch{width:100%!important;height:38px!important;border-radius:12px!important;margin:0 0 9px!important}
+@media(max-width:360px){.v2-settings-nav .settings-tab{font-size:13px!important;padding:11px 13px!important}}
