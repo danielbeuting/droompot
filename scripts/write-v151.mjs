@@ -20,6 +20,7 @@ await Promise.all([
   writeFile(new URL('../dist/v151/app.js', import.meta.url), js),
   copyFile(new URL('../v151-bootstrap.js', import.meta.url), new URL('../dist/v151/v151-bootstrap.js', import.meta.url)),
   copyFile(new URL('../v151-feedback.js', import.meta.url), new URL('../dist/v151/v151-feedback.js', import.meta.url)),
+  copyFile(new URL('../v151-v2-integration.js', import.meta.url), new URL('../dist/v151/v151-v2-integration.js', import.meta.url)),
   copyFile(new URL('../src/theme-fixes.css', import.meta.url), new URL('../dist/v151/theme-fixes.css', import.meta.url)),
   copyFile(new URL('../droompot-pig.png', import.meta.url), new URL('../dist/v151/droompot-pig.png', import.meta.url)),
   copyFile(new URL('../noi.jpg', import.meta.url), new URL('../dist/v151/noi.jpg', import.meta.url)),
