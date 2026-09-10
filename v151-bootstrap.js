@@ -34,7 +34,8 @@
 
   if(slug){
     try{
-      const r=await nativeFetch(`/.netlify/functions/dream-data?slug=${encodeURIComponent(slug)}`,{cache:'no-store'});
+      const headers=token?{Authorization:`Bearer ${token}`}:{}}
+      const r=await nativeFetch(`/.netlify/functions/dream-data?slug=${encodeURIComponent(slug)}`,{cache:'no-store',headers});
       if(r.ok){
         const payload=await r.json();
         if(payload?.data)localStorage.setItem(STATE_KEY,JSON.stringify(payload.data));
@@ -48,6 +49,11 @@
   s.onload=()=>{
     const enhancement=document.createElement('script');
     enhancement.src='v151-feedback.js';
+    enhancement.onload=()=>{
+      const integration=document.createElement('script');
+      integration.src='v151-v2-integration.js';
+      document.body.appendChild(integration);
+    };
     document.body.appendChild(enhancement);
   };
   document.body.appendChild(s);
