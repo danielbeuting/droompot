@@ -5,7 +5,7 @@ import pig from '../droompot-pig.png'
 
 const THEMES = [
   ['green','Groen','#72c99b','#eaf8f0'],['blue','Blauw','#6aa9ff','#edf4ff'],['pink','Roze','#f39ac2','#fff0f6'],
-  ['yellow','Geel','#f1c64a','#fff8da'],['purple','Paars','#9c78f0','#f3eeff'],['beige','Beige','#bda688','#f6f0e8']
+  ['yellow','Geel','#e5b832','#fff4c7'],['purple','Paars','#8f6ee7','#eee8ff'],['beige','Beige','#b79b7b','#f3e9dc']
 ]
 const EMOJIS = ['🎯','🚲','🚗','🎓','⚽','🧸','🎮','🎵','✈️','🏕️','🐴','🐶','📚','💻','🎨','🎁','⭐','💛','🏠','🌈']
 const money = value => new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(Number(value||0)).replace(',00','')
@@ -19,7 +19,11 @@ function Primary({children,...props}){return <button className="primary-btn" {..
 export default function ManageV2(){
   const { id }=useParams()
   const [session,setSession]=useState(undefined); const [pot,setPot]=useState(undefined); const [privateSettings,setPrivateSettings]=useState(null); const [goals,setGoals]=useState([]); const [wishes,setWishes]=useState([]); const [contributions,setContributions]=useState([]); const [tab,setTab]=useState('profile'); const [toast,setToast]=useState('')
-  useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session))},[])
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data})=>setSession(data.session))
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((_,next)=>setSession(next))
+    return ()=>subscription.unsubscribe()
+  },[])
   async function load(){
     const [{data:p},{data:priv},{data:g},{data:w},{data:c}]=await Promise.all([
       supabase.from('dreampots').select('*').eq('id',id).single(),
@@ -33,8 +37,9 @@ export default function ManageV2(){
   useEffect(()=>{if(session)load()},[session,id])
   useEffect(()=>{if(pot?.theme)document.documentElement.dataset.theme=pot.theme},[pot?.theme])
   const saved=(msg='Opgeslagen ✓')=>{setToast(msg);load();setTimeout(()=>setToast(''),1800)}
-  if(session===undefined||pot===undefined)return <main className="app-shell"><section className="screen active"><div className="placeholder-wrap">Beheer laden…</div></section></main>
+  if(session===undefined)return <main className="app-shell"><section className="screen active"><div className="placeholder-wrap">Beheer laden…</div></section></main>
   if(!session)return <Navigate to="/login"/>
+  if(pot===undefined)return <main className="app-shell"><section className="screen active"><div className="placeholder-wrap">Droompot laden…</div></section></main>
   if(!pot)return <Navigate to="/app"/>
   return <main className="app-shell"><section className="screen active"><Topbar/>
     <div className="settings-profile-mini"><div className="avatar" style={pot.photo_path?{backgroundImage:`url(${mediaUrl(pot.photo_path)})`}:undefined}>{pot.photo_path?'':pot.child_name?.[0]}</div><div><p className="mini-label">Droompot van</p><h2>{pot.child_name}</h2></div><button className="icon-btn" onClick={()=>window.location.assign(`/p/${pot.slug}?view=dream`)}>↗</button></div>
