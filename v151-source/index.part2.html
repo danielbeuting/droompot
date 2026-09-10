@@ -1,0 +1,190 @@
+<section id="screen-settings-login" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title">Beheer</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="settings-login-wrap">
+        <div class="settings-lock-icon">🔒</div>
+        <p class="eyebrow">Ouderomgeving</p>
+        <h2>Instellingen beheren</h2>
+        <p>Log in om de Droompot van Noï aan te passen.</p>
+
+        <label class="field-label" for="settings-username">Gebruikersnaam</label>
+        <input class="text-input" id="settings-username" autocomplete="username" placeholder="Gebruikersnaam">
+
+        <label class="field-label" for="settings-password">Wachtwoord</label>
+        <input class="text-input" id="settings-password" type="password" autocomplete="current-password" placeholder="Wachtwoord">
+
+        <button class="primary-btn" id="settings-login-btn">Inloggen</button>
+        <div class="login-error" id="settings-login-error">Gebruikersnaam of wachtwoord klopt niet.</div>
+        <p class="login-demo-note">Demo-login. Voor een echte versie beveiligen we dit server-side.</p>
+      </section>
+    </section>
+
+    <section id="screen-settings" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title">Instellingen</div>
+        <button class="logout-settings-btn" id="logout-settings-btn">Uitloggen</button>
+      </header>
+      <section class="section compact">
+        <div class="settings-nav">
+          <button class="settings-tab active" data-settings-tab="profile">Profiel</button>
+          <button class="settings-tab" data-settings-tab="style">Stijl</button>
+          <button class="settings-tab" data-settings-tab="goals">Spaardoelen</button>
+          <button class="settings-tab" data-settings-tab="wishlist">Verlanglijstje</button>
+          <button class="settings-tab" data-settings-tab="contributions">Bijdragen</button>
+        </div>
+
+        <div class="settings-panel active" data-settings-panel="profile">
+        <div class="settings-block">
+          <p class="eyebrow dark">Profiel</p>
+          <h2 id="settings-profile-title"><span class="dynamic-child-name"></span>'s Droompot</h2>
+
+          <div class="photo-setting">
+            <div class="avatar settings-avatar" id="settings-avatar">R</div>
+            <div>
+              <label class="upload-btn" for="photo-upload">Foto uploaden</label>
+              <input id="photo-upload" type="file" accept="image/*" hidden />
+              <p class="tiny-left">De foto wordt in deze demo lokaal opgeslagen.</p>
+            </div>
+          </div>
+
+          <label class="field-label" for="setting-child">Naam kind</label>
+          <input class="text-input" id="setting-child" type="text" maxlength="30" />
+          <label class="field-label" for="setting-birthdate">Geboortedatum</label>
+          <div class="date-input-wrap"><input class="text-input" id="setting-birthdate" type="date" /></div>
+        </div>
+        </div>
+
+        <div class="settings-panel" data-settings-panel="style">
+        <div class="settings-block">
+          <p class="eyebrow dark">Kleurthema</p>
+          <h2>Kies je stijl</h2>
+          <div class="theme-grid">
+            <button class="theme-card" data-theme-choice="blue"><span class="theme-swatch blue"></span>Blauw</button>
+            <button class="theme-card" data-theme-choice="pink"><span class="theme-swatch pink"></span>Roze</button>
+            <button class="theme-card selected" data-theme-choice="green"><span class="theme-swatch green"></span>Groen</button>
+          <button class="theme-card" data-theme-choice="yellow"><span class="theme-swatch yellow"></span><strong>Geel</strong></button>
+          <button class="theme-card" data-theme-choice="purple"><span class="theme-swatch purple"></span><strong>Paars</strong></button>
+          <button class="theme-card" data-theme-choice="beige"><span class="theme-swatch beige"></span><strong>Beige</strong></button>
+          </div>
+        </div>
+        </div>
+
+        <div class="settings-panel" data-settings-panel="goals">
+        <div class="field general-description-field">
+          <label>Tekst algemene spaarrekening</label>
+          <textarea id="setting-general-description" maxlength="140" rows="3" placeholder="Bijvoorbeeld: Een potje voor later, zonder vast doel."></textarea>
+          <small>Deze tekst staat op de kaart van de algemene spaarrekening.</small>
+        </div>
+
+        <div class="settings-block">
+          <p class="eyebrow dark">Spaardoelen</p>
+          <h2>Dromen beheren</h2>
+          <p class="settings-help">Voeg spaardoelen toe, pas ze aan of verwijder ze. De algemene spaarrekening blijft altijd bestaan.</p>
+
+          <div class="add-goal-card">
+            <div class="add-goal-top">
+              <div class="settings-goal-field">
+                <label>Emoji</label>
+                <input class="emoji-input" id="new-goal-emoji" maxlength="4" value="✨">
+              </div>
+              <div class="settings-goal-field">
+                <label>Naam spaardoel</label>
+                <input id="new-goal-title" maxlength="60" placeholder="Bijv. Nieuwe step">
+              </div>
+            </div>
+            <div class="settings-goal-field">
+              <label>Korte beschrijving <span class="optional">(optioneel)</span></label>
+              <input id="new-goal-description" maxlength="90" placeholder="Bijv. Voor avonturen naar school en opa & oma">
+            </div>
+            <div class="add-goal-bottom">
+              <div class="settings-goal-field">
+                <label>Huidige stand</label>
+                <input id="new-goal-current" type="number" min="0" step="1" value="0">
+              </div>
+              <div class="settings-goal-field">
+                <label>Doelbedrag</label>
+                <input id="new-goal-target" type="number" min="1" step="1" value="100">
+              </div>
+            </div>
+            <button class="secondary-btn" id="add-goal-btn">Spaardoel toevoegen</button>
+          </div>
+
+          <div id="settings-goals"></div>
+        </div>
+
+
+        </div>
+        <div class="settings-panel" data-settings-panel="wishlist">
+        <div class="settings-block">
+          <p class="eyebrow dark">Verlanglijstje</p>
+          <h2>Producten beheren</h2>
+          <p class="settings-help">Voeg hier een productlink toe. Droompot probeert automatisch de productnaam, afbeelding en prijs van de productpagina op te halen. Lukt de prijs niet automatisch, dan kun je hem zelf invullen.</p>
+
+          <label class="field-label" for="setting-wish-url">Productlink</label>
+          <input class="text-input" id="setting-wish-url" inputmode="url" placeholder="https://webshop.nl/product">
+
+          <div class="wish-settings-row price-row">
+            <div>
+              <label class="field-label" for="setting-wish-title">Naam product</label>
+              <input class="text-input" id="setting-wish-title" placeholder="Wordt indien mogelijk automatisch ingevuld">
+            </div>
+            <div>
+              <label class="field-label" for="setting-wish-price">Prijs</label>
+              <div class="money-input-wrap"><span>€</span><input id="setting-wish-price" type="number" min="0" step="0.01" placeholder="0,00"></div>
+            </div>
+          </div>
+
+          <button class="secondary-btn metadata-btn" id="fetch-product-btn">Haal productgegevens op</button>
+          <div class="product-preview" id="product-preview">
+            <div class="product-preview-media" id="product-preview-media"><img src="droompot-pig.png" alt=""></div>
+            <div>
+              <strong id="product-preview-title">Nog geen product gekozen</strong>
+              <small id="product-preview-status">Plak een productlink hierboven.</small>
+            </div>
+          </div>
+
+          <input type="hidden" id="setting-wish-image">
+
+          <button class="primary-btn" id="add-wish-settings-btn">Toevoegen aan verlanglijstje</button>
+
+          <div class="settings-wish-list" id="settings-wish-list"></div>
+        </div>
+
+
+        </div>
+
+        <div class="settings-panel" data-settings-panel="contributions">
+          <div class="settings-block">
+            <p class="eyebrow dark">Recente bijdragen</p>
+            <h2>Bijdragen beheren</h2>
+            <p class="settings-help">Verwijder ongewenste berichten of foto's. Dit verwijdert de bijdrage alleen uit het zichtbare overzicht, niet uit een echte banktransactie.</p>
+            <div class="settings-contributions-list" id="settings-contributions-list"></div>
+          </div>
+        </div>
+
+        <div class="settings-block sync-settings-block">
+          <p class="eyebrow dark">Online synchronisatie</p>
+          <h2>Gedeelde Droompot</h2>
+          <p class="settings-help">Wanneer deze versie via Netlify Functions + Blobs is gekoppeld, ziet iedereen met de link dezelfde naam, foto, spaardoelen en het verlanglijstje.</p>
+          <div class="sync-status" id="sync-status">
+            <span class="sync-dot"></span>
+            <span id="sync-status-text">Lokale demo-opslag</span>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="secondary-btn" id="cancel-settings-btn">Annuleren</button>
+          <button class="primary-btn" id="save-settings-btn">Opslaan</button>
+        </div>
+        <button class="reset-demo-btn" id="reset-demo-btn">
+          <span class="reset-demo-icon">↺</span>
+          <span><strong>Demo resetten</strong><small>Zet alle demo-data terug naar het begin</small></span>
+        </button>
+      </section>
+    </section>
+
+    
