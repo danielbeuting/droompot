@@ -17,3 +17,9 @@ jobs:
         env:
           VITE_SUPABASE_URL: https://xmzeaiejgmxnizblqllo.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: placeholder-for-build-only
+      - name: Package working version
+        run: zip -r Droompot_V2_working.zip . -x '.git/*' 'node_modules/*' 'Droompot_V2_working.zip'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Droompot_V2_working
+          path: Droompot_V2_working.zip
