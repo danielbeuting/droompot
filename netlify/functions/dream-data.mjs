@@ -96,10 +96,12 @@ async function writeState(supabase, slug, state) {
   const pot = await ownedPot(supabase, slug)
   if (!pot) return { error: 'Unauthorized or Droompot not found', status: 403 }
 
+  const photo = typeof state.photo === 'string' && state.photo.trim() ? state.photo.trim() : null
   const { error: potError } = await supabase.from('dreampots').update({
     child_name: String(state.childName || '').trim() || 'Droompot',
     birth_date: state.birthDate || null,
     theme: state.theme || 'green',
+    photo_path: photo,
   }).eq('id', pot.id)
   if (potError) throw potError
 
@@ -120,7 +122,7 @@ async function writeState(supabase, slug, state) {
       icon: generalInput.icon || '💰',
       target_amount: Math.max(1, Number(generalInput.goal || 1)),
       current_amount: Math.max(0, Number(generalInput.current || 0)),
-      sort_order: incomingGoals.length - 1,
+      sort_order: Math.max(0, incomingGoals.length - 1),
     }).eq('id', general.id)
     if (error) throw error
   }
@@ -157,13 +159,12 @@ async function writeState(supabase, slug, state) {
     if (error) throw error
   }
 
-  // Moderation in V1.5.1 removes contributions from the visible list. Keep only
-  // contribution UUIDs still present when the incoming state contains them.
+  // V1.5.1 moderation deletes contributions from the visible list.
   const keep = new Set((state.transactions || []).map(t => t.id).filter(Boolean))
   const { data: existingContributions, error: cError } = await supabase.from('contributions').select('id').eq('dreampot_id', pot.id)
   if (cError) throw cError
   const remove = (existingContributions || []).map(c => c.id).filter(id => !keep.has(id))
-  if (remove.length && keep.size) {
+  if (remove.length) {
     const { error } = await supabase.from('contributions').delete().in('id', remove)
     if (error) throw error
   }
