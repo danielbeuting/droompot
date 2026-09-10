@@ -21,6 +21,6 @@ export const supabase = createClient(
 
 export const mediaUrl = (path) => {
   if (!path) return ''
-  if (/^https?:\/\//i.test(path)) return path
+  if (/^(https?:\/\/|data:)/i.test(path)) return path
   return supabase.storage.from('dreampot-media').getPublicUrl(path).data.publicUrl
 }
