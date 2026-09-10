@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="green">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f2ff" />
+  <title>Droompot v1.4.3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app-shell">
+
+    <section id="screen-start" class="screen start-screen active">
+      <div class="start-wrap">
+        <div class="start-brand-pig"><img src="droompot-pig.png" alt="Droompot"></div>
+        <p class="eyebrow">Welkom bij Droompot</p>
+        <h1 id="start-title">Wat wil je bekijken?</h1>
+        <p class="start-copy">Kies of je naar Robin's Droompot of naar het verlanglijstje wilt.</p>
+
+        <div class="start-choice-grid">
+          <button class="start-choice dream" id="start-dream-btn">
+            <span class="start-choice-icon pig-choice-icon"><img src="droompot-pig.png" alt=""></span>
+            <span>
+              <strong>Ga naar Droompot</strong>
+              <small>Bekijk spaardoelen en draag bij</small>
+            </span>
+            <b>›</b>
+          </button><button class="start-choice wishlist" id="start-wishlist-btn">
+            <span class="start-choice-icon gift-choice-icon">🎁</span>
+            <span>
+              <strong>Ga naar verlanglijstje</strong>
+              <small>Bekijk cadeaus en wensen</small>
+            </span>
+            <b>›</b>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-home" class="screen">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark pig-brand-mark"><img src="droompot-pig.png" alt="Droompot"></div>
+          <div>
+            <div class="brand-name">Droompot</div>
+            <div class="brand-sub">kleine beetjes, grote dromen</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="open-settings" aria-label="Instellingen">⚙</button>
+          <button class="icon-btn menu-btn" id="open-menu" aria-label="Menu">☰</button>
+        </div>
+      </header>
+
+      <section class="profile-strip">
+        <label class="avatar-wrap" title="Foto wijzigen via instellingen">
+          <div class="avatar" id="child-avatar">R</div>
+        </label>
+        <div class="profile-main">
+          <p class="mini-label">Droompot van</p>
+          <h1 id="child-name-label">Robin</h1>
+          <p class="profile-copy" id="profile-copy">Hier vind je spaardoelen, de spaarrekening en alles waar Noï voor droomt en spaart.</p>
+          <div class="birthday-line" id="birthday-line">3 jaar · over 120 dagen jarig 🎈</div>
+        </div>
+        <div class="pop-star">✦</div>
+      </section>
+      <button class="wishlist-cta" id="home-wishlist-btn">
+        <span>🎁</span>
+        <span><strong>Bekijk het verlanglijstje</strong><small>Of liever een cadeautje geven?</small></span>
+        <b>›</b>
+      </button>
+
+      <section class="goals-area">
+        <div class="goals-title-row">
+          <div>
+            <p class="eyebrow">Waar droomt Robin van?</p>
+            <h2>Swipe door de spaardoelen</h2>
+          </div>
+          <div class="swipe-hint">← swipe →</div>
+        </div>
+
+        <div id="goals-carousel" class="goals-carousel"></div>
+        <div id="goal-dots" class="goal-dots"></div>
+
+      </section>
+
+      <section class="section give-section">
+        <div class="selected-goal-callout selected-goal-dropdown">
+          <div class="selected-goal-icon" id="give-goal-icon">🚲</div>
+          <div class="selected-goal-copy">
+            <p>Je draagt nu bij aan</p>
+            <strong id="give-goal-name">Nieuwe fiets</strong>
+          </div>
+          <span class="selected-goal-arrow">⌄</span>
+          <select id="goal-selector" class="selected-goal-select" aria-label="Kies een spaardoel"></select>
+        </div>
+
+        <div class="section-head give-heading">
+          <div>
+            <p class="eyebrow dark" id="give-eyebrow">Geef iets voor de nieuwe fiets</p>
+            <h2>Kies een bedrag</h2>
+          </div>
+        </div>
+
+        <div class="amount-grid">
+          <button class="amount-chip" data-amount="5">€ 5</button>
+          <button class="amount-chip" data-amount="10">€ 10</button>
+          <button class="amount-chip selected" data-amount="20">€ 20</button>
+          <button class="amount-chip" data-amount="25">€ 25</button>
+          <button class="amount-chip" data-amount="50">€ 50</button>
+        </div>
+
+        <label class="field-label" for="custom-amount">Of kies een eigen bedrag</label>
+        <div class="money-input-wrap">
+          <span>€</span>
+          <input id="custom-amount" type="number" min="1" step="1" inputmode="decimal" placeholder="0" />
+        </div>
+
+        <div class="donation-mode">
+          <button class="mode-card selected" data-mode="digital">
+            <span class="mode-icon">↗</span>
+            <span><strong>Digitaal geven</strong><small>Doorloop de demo-betaling</small></span>
+          </button>
+          <button class="mode-card" data-mode="cash">
+            <span class="mode-icon">€</span>
+            <span><strong>Contant in de pot</strong><small>Registreer een contante bijdrage</small></span>
+          </button>
+        </div>
+
+        <button class="primary-btn" id="continue-btn">Ik geef € 20</button>
+      </section>
+
+      <section class="section transaction-section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow dark">Samen sparen</p>
+            <h2>Recente bijdragen</h2>
+          </div>
+        </div>
+        <div id="transactions-list" class="transactions-list"></div>
+      </section>
+    </section>
+
+    <section id="screen-details" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title">Jouw bijdrage</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="section compact">
+        <div class="payment-summary">
+          <p>Je geeft</p>
+          <div class="payment-amount" id="details-amount">€ 20</div>
+          <p id="details-goal-row">voor <strong id="details-goal">Nieuwe fiets</strong></p>
+        </div>
+
+        <label class="field-label" for="giver-name">Je naam</label>
+        <input class="text-input" id="giver-name" type="text" placeholder="Bijv. Oma Els" maxlength="40" />
+
+        <label class="field-label" for="giver-message">Een berichtje <span class="optional">(optioneel)</span></label>
+        <textarea class="text-input textarea" id="giver-message" placeholder="Veel plezier met je droom! ✨" maxlength="120"></textarea>
+
+        <div class="donation-photo-field">
+          <div class="donation-photo-preview" id="donation-photo-preview"><span>+</span></div>
+          <div>
+            <label class="upload-btn" for="donation-photo-upload">Foto toevoegen</label>
+            <input id="donation-photo-upload" type="file" accept="image/*" hidden>
+            <p>Optioneel. Zonder foto tonen we gewoon de eerste letter van je naam.</p>
+          </div>
+        </div>
+
+        <button class="primary-btn" id="to-payment-btn">Verder</button>
+      </section>
+    </section>
+
+    <section id="screen-payment" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="details">←</button>
+        <div class="top-title">Demo betaling</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="section compact">
+        <div class="demo-banner">
+          <strong>DEMO</strong>
+          <span>Er wordt geen echt geld afgeschreven.</span>
+        </div>
+        <div class="checkout-card">
+          <div class="checkout-row" id="checkout-goal-row"><span>Spaardoel</span><strong id="checkout-goal"></strong></div>
+          <div class="checkout-row total"><span>Totaal</span><strong id="checkout-total"></strong></div>
+        </div>
+        <div class="fake-method">
+          <div class="method-logo">iD</div>
+          <div><strong>iDEAL</strong><span>Simulatiebetaling</span></div>
+          <div class="radio checked"></div>
+        </div>
+        <button class="primary-btn" id="fake-pay-btn">Betaal € 20</button>
+        <p class="tiny-note">Dit is uitsluitend een prototype. Er vindt geen financiële transactie plaats.</p>
+      </section>
+    </section>
+
+    <section id="screen-cash" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="details">←</button>
+        <div class="top-title">Contante bijdrage</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="section compact">
+        <div class="cash-hero">
+          <div class="cash-icon">€</div>
+          <h2>Geld in de fysieke pot?</h2>
+          <p>Registreer de contante bijdrage zodat de digitale voortgang ook klopt.</p>
+        </div>
+        <div class="checkout-card">
+          <div class="checkout-row" id="cash-goal-row"><span>Spaardoel</span><strong id="cash-goal"></strong></div>
+          <div class="checkout-row total"><span>Contant bedrag</span><strong id="cash-total"></strong></div>
+        </div>
+        <button class="primary-btn" id="confirm-cash-btn">Contante bijdrage toevoegen</button>
+      </section>
+    </section>
+
+    <section id="screen-success" class="screen">
+      <canvas id="confetti-canvas"></canvas>
+      <div class="success-wrap">
+        <div class="success-icon">✓</div>
+        <p class="eyebrow">YES!</p>
+        <h2 id="success-title">€ 20 toegevoegd 🎉</h2>
+        <p id="success-copy"></p>
+        <div class="success-balance">
+          <span>Nieuwe stand van dit spaardoel</span>
+          <strong id="success-balance"></strong>
+        </div>
+        <button class="primary-btn" id="back-home-btn">Bekijk de Droompot</button>
+      </div>
+    </section>
+
+
+    <section id="screen-settings-login" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title">Beheer</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="settings-login-wrap">
+        <div class="settings-lock-icon">🔒</div>
+        <p class="eyebrow">Ouderomgeving</p>
+        <h2>Instellingen beheren</h2>
+        <p>Log in om de Droompot van Noï aan te passen.</p>
+
+        <label class="field-label" for="settings-username">Gebruikersnaam</label>
+        <input class="text-input" id="settings-username" autocomplete="username" placeholder="Gebruikersnaam">
+
+        <label class="field-label" for="settings-password">Wachtwoord</label>
+        <input class="text-input" id="settings-password" type="password" autocomplete="current-password" placeholder="Wachtwoord">
+
+        <button class="primary-btn" id="settings-login-btn">Inloggen</button>
+        <div class="login-error" id="settings-login-error">Gebruikersnaam of wachtwoord klopt niet.</div>
+        <p class="login-demo-note">Demo-login. Voor een echte versie beveiligen we dit server-side.</p>
+      </section>
+    </section>
+
+    <section id="screen-settings" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title">Instellingen</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="section compact">
+        <div class="settings-nav">
+          <button class="settings-tab active" data-settings-tab="profile">Profiel</button>
+          <button class="settings-tab" data-settings-tab="style">Stijl</button>
+          <button class="settings-tab" data-settings-tab="goals">Spaardoelen</button>
+          <button class="settings-tab" data-settings-tab="wishlist">Verlanglijstje</button>
+          <button class="settings-tab" data-settings-tab="contributions">Bijdragen</button>
+        </div>
+
+        <div class="settings-panel active" data-settings-panel="profile">
+        <div class="settings-block">
+          <p class="eyebrow dark">Profiel</p>
+          <h2 id="settings-profile-title">Robin's Droompot</h2>
+
+          <div class="photo-setting">
+            <div class="avatar settings-avatar" id="settings-avatar">R</div>
+            <div>
+              <label class="upload-btn" for="photo-upload">Foto uploaden</label>
+              <input id="photo-upload" type="file" accept="image/*" hidden />
+              <p class="tiny-left">De foto wordt in deze demo lokaal opgeslagen.</p>
+            </div>
+          </div>
+
+          <label class="field-label" for="setting-child">Naam kind</label>
+          <input class="text-input" id="setting-child" type="text" maxlength="30" />
+          <label class="field-label" for="setting-birthdate">Geboortedatum</label>
+          <div class="date-input-wrap"><input class="text-input" id="setting-birthdate" type="date" /></div>
+        </div>
+        </div>
+
+        <div class="settings-panel" data-settings-panel="style">
+        <div class="settings-block">
+          <p class="eyebrow dark">Kleurthema</p>
+          <h2>Kies je stijl</h2>
+          <div class="theme-grid">
+            <button class="theme-card" data-theme-choice="blue"><span class="theme-swatch blue"></span>Blauw</button>
+            <button class="theme-card" data-theme-choice="pink"><span class="theme-swatch pink"></span>Roze</button>
+            <button class="theme-card selected" data-theme-choice="green"><span class="theme-swatch green"></span>Groen</button>
+          <button class="theme-card" data-theme-choice="yellow"><span class="theme-swatch yellow"></span><strong>Geel</strong></button>
+          <button class="theme-card" data-theme-choice="purple"><span class="theme-swatch purple"></span><strong>Paars</strong></button>
+          <button class="theme-card" data-theme-choice="beige"><span class="theme-swatch beige"></span><strong>Beige</strong></button>
+          <button class="theme-card" data-theme-choice="animals"><span class="theme-swatch themed">🐾</span><strong>Dieren</strong></button>
+          <button class="theme-card" data-theme-choice="cars"><span class="theme-swatch themed">🚗</span><strong>Auto</strong></button>
+          <button class="theme-card" data-theme-choice="farm"><span class="theme-swatch themed">🚜</span><strong>Boerderij</strong></button>
+          </div>
+        </div>
+        </div>
+
+        <div class="settings-panel" data-settings-panel="goals">
+        <div class="settings-block">
+          <p class="eyebrow dark">Spaardoelen</p>
+          <h2>Dromen beheren</h2>
+          <p class="settings-help">Voeg spaardoelen toe, pas ze aan of verwijder ze. De algemene spaarrekening blijft altijd bestaan.</p>
+
+          <div class="add-goal-card">
+            <div class="add-goal-top">
+              <div class="settings-goal-field">
+                <label>Emoji</label>
+                <input class="emoji-input" id="new-goal-emoji" maxlength="4" value="✨">
+              </div>
+              <div class="settings-goal-field">
+                <label>Naam spaardoel</label>
+                <input id="new-goal-title" maxlength="60" placeholder="Bijv. Nieuwe step">
+              </div>
+            </div>
+            <div class="settings-goal-field">
+              <label>Korte beschrijving <span class="optional">(optioneel)</span></label>
+              <input id="new-goal-description" maxlength="90" placeholder="Bijv. Voor avonturen naar school en opa & oma">
+            </div>
+            <div class="add-goal-bottom">
+              <div class="settings-goal-field">
+                <label>Huidige stand</label>
+                <input id="new-goal-current" type="number" min="0" step="1" value="0">
+              </div>
+              <div class="settings-goal-field">
+                <label>Doelbedrag</label>
+                <input id="new-goal-target" type="number" min="1" step="1" value="100">
+              </div>
+            </div>
+            <button class="secondary-btn" id="add-goal-btn">Spaardoel toevoegen</button>
+          </div>
+
+          <div id="settings-goals"></div>
+        </div>
+
+
+        </div>
+        <div class="settings-panel" data-settings-panel="wishlist">
+        <div class="settings-block">
+          <p class="eyebrow dark">Verlanglijstje</p>
+          <h2>Producten beheren</h2>
+          <p class="settings-help">Voeg hier een productlink toe. Droompot probeert automatisch de productnaam, afbeelding en prijs van de productpagina op te halen. Lukt de prijs niet automatisch, dan kun je hem zelf invullen.</p>
+
+          <label class="field-label" for="setting-wish-url">Productlink</label>
+          <input class="text-input" id="setting-wish-url" inputmode="url" placeholder="https://webshop.nl/product">
+
+          <div class="wish-settings-row price-row">
+            <div>
+              <label class="field-label" for="setting-wish-title">Naam product</label>
+              <input class="text-input" id="setting-wish-title" placeholder="Wordt indien mogelijk automatisch ingevuld">
+            </div>
+            <div>
+              <label class="field-label" for="setting-wish-price">Prijs</label>
+              <div class="money-input-wrap"><span>€</span><input id="setting-wish-price" type="number" min="0" step="0.01" placeholder="0,00"></div>
+            </div>
+          </div>
+
+          <button class="secondary-btn metadata-btn" id="fetch-product-btn">Haal productgegevens op</button>
+          <div class="product-preview" id="product-preview">
+            <div class="product-preview-media" id="product-preview-media"><img src="droompot-pig.png" alt=""></div>
+            <div>
+              <strong id="product-preview-title">Nog geen product gekozen</strong>
+              <small id="product-preview-status">Plak een productlink hierboven.</small>
+            </div>
+          </div>
+
+          <input type="hidden" id="setting-wish-image">
+
+          <button class="primary-btn" id="add-wish-settings-btn">Toevoegen aan verlanglijstje</button>
+
+          <div class="settings-wish-list" id="settings-wish-list"></div>
+        </div>
+
+
+        </div>
+
+        <div class="settings-panel" data-settings-panel="contributions">
+          <div class="settings-block">
+            <p class="eyebrow dark">Recente bijdragen</p>
+            <h2>Bijdragen beheren</h2>
+            <p class="settings-help">Verwijder ongewenste berichten of foto's. Dit verwijdert de bijdrage alleen uit het zichtbare overzicht, niet uit een echte banktransactie.</p>
+            <div class="settings-contributions-list" id="settings-contributions-list"></div>
+          </div>
+        </div>
+
+        <div class="settings-block sync-settings-block">
+          <p class="eyebrow dark">Online synchronisatie</p>
+          <h2>Gedeelde Droompot</h2>
+          <p class="settings-help">Wanneer deze versie via Netlify Functions + Blobs is gekoppeld, ziet iedereen met de link dezelfde naam, foto, spaardoelen en het verlanglijstje.</p>
+          <div class="sync-status" id="sync-status">
+            <span class="sync-dot"></span>
+            <span id="sync-status-text">Lokale demo-opslag</span>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="secondary-btn" id="cancel-settings-btn">Annuleren</button>
+          <button class="primary-btn" id="save-settings-btn">Opslaan</button>
+        </div>
+        <button class="reset-demo-btn" id="reset-demo-btn">
+          <span class="reset-demo-icon">↺</span>
+          <span><strong>Demo resetten</strong><small>Zet alle demo-data terug naar het begin</small></span>
+        </button>
+      </section>
+    </section>
+
+    <section id="screen-wishlist" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title">Verlanglijstje</div>
+        <button class="icon-btn" id="share-wishlist" aria-label="Delen">↗</button>
+      </header>
+
+      <section class="wishlist-hero">
+        <div class="wishlist-avatar avatar" id="wishlist-avatar">R</div>
+        <div>
+          <p class="eyebrow" id="wishlist-owner-label">Robin's wensen</p>
+          <h2>Verlanglijstje</h2>
+          <p id="wishlist-owner-copy">Hier verzamelt Robin cadeautjes en ideeën waar die blij van wordt.</p>
+        </div>
+      </section>
+
+      <button class="dreampot-cta" id="wishlist-dreampot-btn">
+        <span class="dreampot-mini-pig"><img src="droompot-pig.png" alt=""></span>
+        <span>
+          <strong>Ga naar Droompot</strong>
+          <small>Bekijk spaardoelen en draag bij</small>
+        </span>
+        <b>›</b>
+      </button>
+
+      <section class="wishlist-actions">
+        <button class="wishlist-filter active" data-wish-filter="all">Alles</button>
+        <button class="wishlist-filter" data-wish-filter="open">Nog vrij</button>
+        <button class="wishlist-filter" data-wish-filter="claimed">Afgestreept</button>
+      </section>
+
+      <section id="wishlist-list" class="wishlist-list"></section>
+    </section>
+
+
+    <section id="screen-goals" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title">Spaardoelen</div>
+        <div class="spacer"></div>
+      </header>
+
+      <section class="info-hero">
+        <div class="info-icon">🎯</div>
+        <p class="eyebrow">Dromen worden concreet</p>
+        <h2>Waarom spaardoelen?</h2>
+        <p>Een spaardoel maakt sparen zichtbaar en begrijpelijk. Niet zomaar geld opzijzetten, maar samen bouwen aan iets waar een kind echt naar uitkijkt.</p>
+      </section>
+
+      <section class="info-stack">
+        <article class="info-card"><strong>Een duidelijk doel</strong><p>Van een nieuwe fiets tot rijlessen of studie: je ziet precies waar je samen voor spaart.</p></article>
+        <article class="info-card"><strong>Samen bijdragen</strong><p>Familie en vrienden kunnen gericht iets geven aan een droom, in plaats van zomaar geld overmaken.</p></article>
+        <article class="info-card"><strong>Motiverend</strong><p>De voortgang maakt sparen leuker. Elk bedrag brengt de droom zichtbaar dichterbij.</p></article>
+      </section>
+    </section>
+
+    <section id="screen-placeholder" class="screen">
+      <header class="topbar simple">
+        <button class="icon-btn" data-back="home">←</button>
+        <div class="top-title" id="placeholder-title">Droompot</div>
+        <div class="spacer"></div>
+      </header>
+      <section class="info-page-wrap">
+        <div class="placeholder-icon" id="placeholder-icon">✦</div>
+        <h2 id="placeholder-heading">Droompot</h2>
+        <div id="placeholder-copy" class="rich-copy"></div>
+        <div id="placeholder-extra"></div>
+        <button class="primary-btn" data-back="home">Terug naar Droompot</button>
+      </section>
+    </section>
+  </main>
+
+  <div class="menu-overlay" id="menu-overlay"></div>
+  <aside class="side-menu" id="side-menu">
+    <div class="menu-head">
+      <div><p class="mini-label">Menu</p><h2>Droompot</h2></div>
+      <button class="icon-btn" id="close-menu">×</button>
+    </div>
+    <nav>
+      <button class="nav-item" data-page="Verlanglijstje"><span>♡</span>Verlanglijstje <b>›</b></button>
+      <button class="nav-item" data-page="Spaardoelen"><span>◎</span>Spaardoelen <b>›</b></button>
+      <button class="nav-item" data-page="Spaarrekening"><span>€</span>Spaarrekening <b>›</b></button>
+      <button class="nav-item" data-page="Waar gaat het geld heen?"><span>→</span>Waar gaat het geld heen? <b>›</b></button>
+      <button class="nav-item" data-page="Referral"><span>↗</span>Referral programma <b>›</b></button>
+      <div class="nav-divider"></div>
+      <button class="nav-item" data-page="Over Droompot"><span>✦</span>Over Droompot <b>›</b></button>
+      <button class="nav-item" data-page="Contact"><span>✉</span>Contact <b>›</b></button>
+    </nav>
+  </aside>
+
+
+
+  <div class="donation-animation" id="donation-animation" aria-hidden="true">
+    <div class="animation-backdrop"></div>
+
+    <div class="animation-stage">
+      <div class="animation-message" id="animation-message">Je bijdrage gaat naar deze droom</div>
+
+      <div class="animation-goal-card" id="animation-goal-card">
+        <div class="animation-goal-icon" id="animation-goal-icon">🚲</div>
+        <div>
+          <p id="animation-goal-type">Spaardoel</p>
+          <h3 id="animation-goal-title">Nieuwe fiets</h3>
+        </div>
+        <div class="animation-goal-progress">
+          <div class="animation-progress-track">
+            <div class="animation-progress-fill" id="animation-progress-fill"></div>
+          </div>
+          <div class="animation-progress-meta">
+            <strong id="animation-progress-amount">€80</strong>
+            <span id="animation-progress-percent">40%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="animation-piggy image-piggy" id="animation-piggy">
+        <img src="droompot-pig.png" alt="Droompot spaarvarken">
+      </div>
+      </div>
+
+      <div class="falling-coin" id="falling-coin">
+        <span id="coin-amount">€20</span>
+      </div>
+
+      <div class="animation-thanks" id="animation-thanks">
+        <p class="animation-thanks-kicker">Dankjewel 💛</p>
+        <h3 id="animation-thanks-title">Robin is weer een stukje dichter bij de droom.</h3>
+      </div>
+
+      <div class="goal-complete-banner" id="goal-complete-banner">
+        <div class="complete-badge">✓</div>
+        <div>
+          <p>SPAARDOEL BEHAALD</p>
+          <h3 id="complete-title">Nieuwe fiets</h3>
+        </div>
+      </div>
+
+      <button class="animation-continue-btn" id="animation-continue-btn">Verder</button>
+    </div>
+
+    <div class="profile-coin-rain" id="profile-coin-rain"></div>
+    <canvas id="celebration-canvas"></canvas>
+  </div>
+
+  <div class="confirm-overlay" id="confirm-overlay"></div>
+  <div class="confirm-modal" id="confirm-modal">
+    <div class="confirm-icon">↺</div>
+    <h2>Demo resetten?</h2>
+    <p>Je gaat de demo resetten. Alle wijzigingen en demo-bijdragen worden teruggezet. Weet je het zeker?</p>
+    <div class="confirm-actions">
+      <button class="secondary-btn confirm-btn" id="cancel-reset">Nee</button>
+      <button class="danger-btn confirm-btn" id="confirm-reset">Ja, reset</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Opgeslagen</div>
+  <script src="app.js"></script>
+</body>
+</html>
