@@ -1,23 +1,24 @@
 import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises'
-import { gunzipSync } from 'node:zlib'
 
-const parts = async (name, count) => {
-  let b64 = ''
-  for (let i = 1; i <= count; i++) {
-    b64 += (await readFile(new URL(`../snapshot-v151/${name}.${i}.b64`, import.meta.url), 'utf8')).trim()
+const htmlParts = async () => {
+  const chunks = []
+  for (let i = 1; i <= 4; i++) {
+    chunks.push(await readFile(new URL(`../v151-source/index.part${i}.html`, import.meta.url), 'utf8'))
   }
-  return gunzipSync(Buffer.from(b64, 'base64')).toString('utf8')
+  return chunks.join('')
 }
 
 await mkdir(new URL('../dist/v151/', import.meta.url), { recursive: true })
 
-let html = await parts('index', 2)
-const css = await parts('style', 4)
-const js = await parts('app', 4)
+// V1.5.1 is now kept as normal, readable source code in the repository.
+// No compressed/base64 snapshot is needed by the build anymore.
+let html = await htmlParts()
+const css = await readFile(new URL('../style.css', import.meta.url), 'utf8')
+const js = await readFile(new URL('../app.js', import.meta.url), 'utf8')
 
-// Keep the exact V1.5.1 DOM/CSS/functionality as the rendered app. The only
-// HTML changes are a base URL for /p/:slug and a bootstrap that loads the
-// matching Supabase-backed Droompot before the original V1.5.1 app.js runs.
+// Keep the original V1.5.1 DOM/CSS/functionality intact. The only runtime
+// integration is the base URL plus the bootstrap that loads/saves the matching
+// Supabase-backed Droompot before the original app.js runs.
 html = html.replace('<head>', '<head>\n  <base href="/v151/">')
 html = html.replace('<script src="app.js"></script>', '<script src="v151-bootstrap.js"></script>')
 
@@ -31,4 +32,4 @@ await Promise.all([
   copyFile(new URL('../robin.jpg', import.meta.url), new URL('../dist/v151/robin.jpg', import.meta.url)),
 ])
 
-console.log('Exact V1.5.1 public app written to dist/v151')
+console.log('V1.5.1 source app written to dist/v151 without snapshot dependency')
