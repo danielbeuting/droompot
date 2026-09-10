@@ -1,0 +1,6 @@
+html[data-theme="yellow"]{--primary:#efc23f;--primary2:#9b7110;--soft:#fff1b8;--bg:#fffaf0;--pop:#ffdf69;--pop2:#f09b4f}
+html[data-theme="purple"]{--primary:#9271e8;--primary2:#5f43b2;--soft:#ebe3ff;--bg:#f8f5ff;--pop:#ffd45b;--pop2:#d58bea}
+html[data-theme="beige"]{--primary:#b89c7d;--primary2:#735c45;--soft:#eee2d4;--bg:#fbf7f1;--pop:#e9c765;--pop2:#c98267}
+html[data-theme="yellow"] body,html[data-theme="yellow"] .app-shell{background:radial-gradient(circle at 0 0,#fff0a8,transparent 38%),#fffaf0}
+html[data-theme="purple"] body,html[data-theme="purple"] .app-shell{background:radial-gradient(circle at 0 0,#e4d8ff,transparent 38%),#f8f5ff}
+html[data-theme="beige"] body,html[data-theme="beige"] .app-shell{background:radial-gradient(circle at 0 0,#ead9c7,transparent 38%),#fbf7f1}
