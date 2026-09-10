@@ -1,0 +1,4 @@
+#confetti-canvas{opacity:1;transition:opacity .8s ease}
+#confetti-canvas.confetti-fade{opacity:0}
+.donation-animation.active .animation-goal-card{box-shadow:0 0 0 3px rgba(255,255,255,.22),0 24px 70px rgba(0,0,0,.32)}
+.donation-animation.drop .falling-coin{z-index:8}
