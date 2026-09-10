@@ -45,5 +45,10 @@
   const s=document.createElement('script');
   s.src='app.js';
   s.defer=false;
+  s.onload=()=>{
+    const enhancement=document.createElement('script');
+    enhancement.src='v151-feedback.js';
+    document.body.appendChild(enhancement);
+  };
   document.body.appendChild(s);
 })();
