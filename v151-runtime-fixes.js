@@ -1,18 +1,22 @@
 (() => {
   const params = new URLSearchParams(window.location.search)
 
-  function openDreamDirectly() {
-    if (params.get('view') === 'dream' && typeof show === 'function') {
+  function openDreamDirectly(attempt = 0) {
+    if (params.get('view') !== 'dream') return
+    if (typeof show === 'function') {
       show('home')
+      return
     }
+    if (attempt < 40) setTimeout(() => openDreamDirectly(attempt + 1), 75)
   }
 
   // Beheer links use ?view=dream so they land directly on the Droompot,
-  // not on the public chooser screen.
+  // not on the public chooser screen. app.js is injected asynchronously by
+  // the Supabase bootstrap, so retry briefly until the v1.5.1 show() exists.
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(openDreamDirectly, 0), { once: true })
+    document.addEventListener('DOMContentLoaded', () => openDreamDirectly(), { once: true })
   } else {
-    setTimeout(openDreamDirectly, 0)
+    openDreamDirectly()
   }
 
   const successScreen = document.getElementById('screen-success')
@@ -21,6 +25,7 @@
     const observer = new MutationObserver(() => {
       if (successScreen.classList.contains('active') && typeof startConfetti === 'function') {
         startConfetti()
+        confettiCanvas.classList.remove('confetti-fade')
         confettiCanvas.classList.add('confetti-visible')
         setTimeout(() => confettiCanvas.classList.add('confetti-fade'), 3200)
         setTimeout(() => {
@@ -33,8 +38,8 @@
   }
 
   // Override the transition from the success page so the v1.5.1 goal animation
-  // always runs after "Bekijk de Droompot". This also avoids timing/race issues
-  // introduced by loading the public state from Supabase first.
+  // always runs after "Bekijk de Droompot". This avoids timing/race issues
+  // introduced by loading the public state from Supabase before app.js starts.
   const backHome = document.getElementById('back-home-btn')
   if (backHome) {
     backHome.addEventListener('click', event => {
