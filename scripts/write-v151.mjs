@@ -10,15 +10,10 @@ const htmlParts = async () => {
 
 await mkdir(new URL('../dist/v151/', import.meta.url), { recursive: true })
 
-// V1.5.1 is now kept as normal, readable source code in the repository.
-// No compressed/base64 snapshot is needed by the build anymore.
 let html = await htmlParts()
 const css = await readFile(new URL('../style.css', import.meta.url), 'utf8')
 const js = await readFile(new URL('../app.js', import.meta.url), 'utf8')
 
-// Keep the original V1.5.1 DOM/CSS/functionality intact. The only runtime
-// integration is the base URL plus the bootstrap that loads/saves the matching
-// Supabase-backed Droompot before the original app.js runs.
 html = html.replace('<head>', '<head>\n  <base href="/v151/">')
 html = html.replace('<script src="app.js"></script>', '<script src="v151-bootstrap.js"></script>')
 
@@ -27,9 +22,10 @@ await Promise.all([
   writeFile(new URL('../dist/v151/style.css', import.meta.url), css),
   writeFile(new URL('../dist/v151/app.js', import.meta.url), js),
   copyFile(new URL('../v151-bootstrap.js', import.meta.url), new URL('../dist/v151/v151-bootstrap.js', import.meta.url)),
+  copyFile(new URL('../v151-feedback.js', import.meta.url), new URL('../dist/v151/v151-feedback.js', import.meta.url)),
   copyFile(new URL('../droompot-pig.png', import.meta.url), new URL('../dist/v151/droompot-pig.png', import.meta.url)),
   copyFile(new URL('../noi.jpg', import.meta.url), new URL('../dist/v151/noi.jpg', import.meta.url)),
   copyFile(new URL('../robin.jpg', import.meta.url), new URL('../dist/v151/robin.jpg', import.meta.url)),
 ])
 
-console.log('V1.5.1 source app written to dist/v151 without snapshot dependency')
+console.log('V1.5.1 source app written to dist/v151 with Supabase and feedback enhancements')
