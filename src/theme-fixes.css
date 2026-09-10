@@ -4,3 +4,15 @@ html[data-theme="beige"]{--primary:#b89c7d;--primary2:#735c45;--soft:#eee2d4;--b
 html[data-theme="yellow"] body,html[data-theme="yellow"] .app-shell{background:radial-gradient(circle at 0 0,#fff0a8,transparent 38%),#fffaf0}
 html[data-theme="purple"] body,html[data-theme="purple"] .app-shell{background:radial-gradient(circle at 0 0,#e4d8ff,transparent 38%),#f8f5ff}
 html[data-theme="beige"] body,html[data-theme="beige"] .app-shell{background:radial-gradient(circle at 0 0,#ead9c7,transparent 38%),#fbf7f1}
+.theme-swatch.yellow{background:#efc23f}.theme-swatch.purple{background:#9271e8}.theme-swatch.beige{background:#b89c7d}
+.settings-avatar{width:82px!important;height:82px!important;border-radius:50%!important;background-size:cover!important;background-position:center!important}
+.photo-setting{align-items:center!important}
+.add-goal-top{grid-template-columns:64px minmax(0,1fr)!important}
+.emoji-goal-field{position:relative}
+.emoji-picker-trigger{width:52px;height:48px;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:25px;display:grid;place-items:center}
+.emoji-picker-popover{position:absolute;z-index:100;left:0;top:72px;width:225px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:8px;box-shadow:var(--shadow);display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.emoji-picker-popover[hidden]{display:none}
+.emoji-picker-popover button{border:0;background:var(--soft);border-radius:10px;padding:7px 4px;font-size:21px}
+#new-goal-title{width:100%}
+.donation-photo-preview{border-radius:50%!important;background-size:cover!important;background-position:center!important;overflow:hidden}
+#confetti-canvas{transition:opacity .9s ease}
