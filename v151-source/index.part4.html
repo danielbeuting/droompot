@@ -1,0 +1,87 @@
+<div class="menu-overlay" id="menu-overlay"></div>
+  <aside class="side-menu" id="side-menu">
+    <div class="menu-head">
+      <div><p class="mini-label">Menu</p><h2>Droompot</h2></div>
+      <button class="icon-btn" id="close-menu">×</button>
+    </div>
+    <nav>
+      <button class="nav-item" data-page="Verlanglijstje"><span>♡</span>Verlanglijstje <b>›</b></button>
+      <button class="nav-item" data-page="Spaardoelen"><span>◎</span>Spaardoelen <b>›</b></button>
+      <button class="nav-item" data-page="Spaarrekening"><span>€</span>Spaarrekening <b>›</b></button>
+      <button class="nav-item" data-page="Waar gaat het geld heen?"><span>→</span>Waar gaat het geld heen? <b>›</b></button>
+      <button class="nav-item" data-page="Referral"><span>↗</span>Referral programma <b>›</b></button>
+      <div class="nav-divider"></div>
+      <button class="nav-item" data-page="Over Droompot"><span>✦</span>Over Droompot <b>›</b></button>
+      <button class="nav-item" data-page="Contact"><span>✉</span>Contact <b>›</b></button>
+    </nav>
+  </aside>
+
+
+
+  <div class="donation-animation" id="donation-animation" aria-hidden="true">
+    <div class="animation-backdrop"></div>
+
+    <div class="animation-stage">
+      <div class="animation-message" id="animation-message">Je bijdrage gaat naar deze droom</div>
+
+      <div class="animation-goal-card" id="animation-goal-card">
+        <div class="animation-goal-icon" id="animation-goal-icon">🚲</div>
+        <div>
+          <p id="animation-goal-type">Spaardoel</p>
+          <h3 id="animation-goal-title">Nieuwe fiets</h3>
+        </div>
+        <div class="animation-goal-progress">
+          <div class="animation-progress-track">
+            <div class="animation-progress-fill" id="animation-progress-fill"></div>
+          </div>
+          <div class="animation-progress-meta">
+            <strong id="animation-progress-amount">€80</strong>
+            <span id="animation-progress-percent">40%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="animation-piggy image-piggy" id="animation-piggy">
+        <img src="droompot-pig.png" alt="Droompot spaarvarken">
+      </div>
+      </div>
+
+      <div class="falling-coin" id="falling-coin">
+        <span id="coin-amount">€20</span>
+      </div>
+
+      <div class="animation-thanks" id="animation-thanks">
+        <p class="animation-thanks-kicker">Dankjewel 💛</p>
+        <h3 id="animation-thanks-title"><span class="dynamic-child-name"></span> is weer een stukje dichter bij de droom.</h3>
+      </div>
+
+      <div class="goal-complete-banner" id="goal-complete-banner">
+        <div class="complete-badge">✓</div>
+        <div>
+          <p>SPAARDOEL BEHAALD</p>
+          <h3 id="complete-title">Nieuwe fiets</h3>
+        </div>
+      </div>
+
+      <button class="animation-continue-btn" id="animation-continue-btn">Verder</button>
+    </div>
+
+    <div class="profile-coin-rain" id="profile-coin-rain"></div>
+    <canvas id="celebration-canvas"></canvas>
+  </div>
+
+  <div class="confirm-overlay" id="confirm-overlay"></div>
+  <div class="confirm-modal" id="confirm-modal">
+    <div class="confirm-icon">↺</div>
+    <h2>Demo resetten?</h2>
+    <p>Je gaat de demo resetten. Alle wijzigingen en demo-bijdragen worden teruggezet. Weet je het zeker?</p>
+    <div class="confirm-actions">
+      <button class="secondary-btn confirm-btn" id="cancel-reset">Nee</button>
+      <button class="danger-btn confirm-btn" id="confirm-reset">Ja, reset</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Opgeslagen</div>
+  <script src="app.js"></script>
+</body>
+</html>
