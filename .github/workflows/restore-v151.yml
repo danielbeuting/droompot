@@ -19,11 +19,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          OLD=4729f3abfb17dbfbd729bbdb91af33ed2f98a7e0
-          git fetch origin "$OLD"
-          for i in 1 2 3 4; do git show "$OLD:snapshot-v151/app.$i.b64"; done | base64 -d | gzip -d > app.js
-          for i in 1 2; do git show "$OLD:snapshot-v151/index.$i.b64"; done | base64 -d | gzip -d > index.html
-          for i in 1 2 3 4; do git show "$OLD:snapshot-v151/style.$i.b64"; done | base64 -d | gzip -d > style.css
+          cat restore-v151/app.*.part | base64 -d | gzip -d > app.js
+          cat restore-v151/index.*.part | base64 -d | gzip -d > index.html
+          cat restore-v151/style.*.part | base64 -d | gzip -d > style.css
           echo 'b259a17f7dcd25321f65eb1dba95bf5f0edac904971a9cd9a486449f9eb3dbe1  app.js' | sha256sum -c -
           echo '96af4b1d610208ee556919b4ce8619f6b133e391462f0116d34c2673aa332b82  index.html' | sha256sum -c -
           echo '490ae55dc643eefc6822682c7a790900415c120dd0491f55115e9ffee50bb865  style.css' | sha256sum -c -
