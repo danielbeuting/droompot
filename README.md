@@ -11,13 +11,13 @@ Spaardoelen:
 - Elk normaal spaardoel toont nu hoeveel geld er nog nodig is.
 - Bij een behaald doel staat 'Doel behaald ✓'.
 - De doorstreeplijn bij behaalde doelen is dikker.
-- Behaalde doelen verdwijnen uit de spaardoel-dropdown.
+- Behaald doelen verdwijnen uit de spaardoel-dropdown.
 - Behaalde doelen blijven wel zichtbaar in het overzicht als afgeronde droom.
 
 Animatie:
 - Spaarvarken is nu een eigen zijaanzicht in plaats van een emoji.
 - Munt is groter en het bedrag erop is nadrukkelijker zichtbaar.
-- Bij het behalen van een doel verandert de bedanktekst naar een expliciete melding dat het doel behaald is.
+- Bij het behalen van een doel verandert de bedankttekst naar een expliciete melding dat het doel behaald is.
 - Feestmodus blijft behouden.
 
 Geen echte betalingen; alles blijft lokale browserdata.
@@ -41,7 +41,7 @@ Geen echte betalingen; alles blijft lokale browserdata.
 
 
 ## v0.9
-- Animatietekst en bedanktekst volledig gecentreerd.
+- Animatietekst en bedankttekst volledig gecentreerd.
 - Verder-knop gecentreerd direct onder het Droompot-varkentje.
 - Varkentje in de knop op het verlanglijstje wordt niet meer afgesneden.
 - Droompot-profielkaart bevat nu korte uitleg.
@@ -57,11 +57,11 @@ Geen echte betalingen; alles blijft lokale browserdata.
 - Bij bijdragen aan de algemene spaarrekening wordt geen spaardoel meer genoemd in de betaalflow.
 
 
-## v1.0 — final polish
+## v1.0 — Final polish
 - Geboortedatum blijft netjes binnen de settings-card op mobiel.
 - Schaduw en afwijkende achtergrond van de swipebare spaardoelen verwijderd.
 - Bedrag op het muntje blijft tijdens de animatie recht leesbaar.
-- Verder-knop staat direct onder het varken; bedanktekst daarna.
+- Verder-knop staat direct onder het varken; bedankttekst daarna.
 - Algemene spaarrekening staat als laatste in de spaardoelen.
 - Navigatiedots onder de spaardoelen bewegen betrouwbaarder mee met swipen.
 - Dots zijn nu ook klikbaar om direct naar een doel te gaan.
@@ -126,7 +126,7 @@ Geen echte betalingen; alles blijft lokale browserdata.
 - Sync-status verborgen; één algemene Opslaan-knop blijft leidend.
 - Na Opslaan blijf je in Settings en verschijnt een duidelijke bevestiging.
 - Nieuwste spaardoel bovenaan; algemene spaarrekening blijft achteraan.
-- Verlanglijstje tekst/prijs groter; bijdragen en verlanglijstje begrensd en scrollbaar.
+- Verlanglijstje tekst/prijs groter; bijdragen en verlanglijstje begrensd en scrollbar.
 - Renteperiode rekent met resterende jaren tot 18.
 - Spaardoelen meer in stijl van profielkaart; spaarrekening met goud accent.
 - Neutralere gloed bij doelkeuze; muntbedrag horizontaal leesbaar.
@@ -146,3 +146,42 @@ Geen echte betalingen; alles blijft lokale browserdata.
 - De normale spaardoel-kaarten gebruiken nu letterlijk dezelfde achtergrondbehandeling als het Droompot-eigenaar-vak.
 - Alleen formaat/decoratieve positionering is aangepast aan de bredere swipe-kaarten.
 - De algemene spaarrekening blijft bewust afwijkend met donker/goud.
+
+## v1.4.4
+- Alle statische Robin-verwijzingen verwijderd; naam volgt de ingestelde eigenaar.
+- Verlanglijstje producttekst en prijs vergroot.
+
+
+## v1.4.5
+- Onder aan Droompot staat nu een echte 'Deel link'-knop voor droompot.nl.
+- Op het verlanglijstje staat rechtsboven 'Deel lijst' en deelt die dezelfde echte URL met kind-specifieke tekst.
+- Thema's teruggebracht naar blauw, roze, groen, geel, paars en beige.
+- Geel, paars en beige werken nu app-breed via achtergrond, kaarten, knoppen, lijnen en accenten.
+- Verlanglijstje-items worden direct opgeslagen bij toevoegen/verwijderen.
+- Spaardoel-dropdown visueel gelijkgetrokken met de neutrale Digitaal/Contant-keuzes.
+
+
+## v1.4.6
+- Demo reset logt de beheerder nu ook uit.
+- Rechtsboven in Settings staat nu een duidelijke knop 'Uitloggen'.
+- Uitloggen wist de lokale beheer-sessie en brengt je terug naar het login-scherm.
+
+
+## v1.4.7
+- Kleur-/schaduwvlak achter de swipebare spaardoelen verwijderd.
+- De ruimte rondom de spaardoelkaarten gebruikt nu exact de gekozen app-achtergrond.
+- Extra outer shadows/gradients op de carousel-container zijn uitgeschakeld.
+
+
+## v1.4.8
+- Foto's bij bijdragen worden niet meer gespiegeld.
+- Mobiele camera-afbeeldingen gebruiken EXIF-orientatie via createImageBitmap.
+- Canvas-transform wordt expliciet gereset voordat de foto wordt opgeslagen.
+- Extra CSS-beveiliging voorkomt spiegeling van foto-avatars.
+
+## v1.4.9
+- Tekst onder 'Waarom spaardoelen?' natuurlijker gemaakt.
+
+## v1.5.0
+- Algemene spaarrekening heeft een warmere standaardtekst.
+- Tekst van de algemene spaarrekening is aanpasbaar via Settings > Spaardoelen en wordt met de algemene Opslaan-knop bewaard.
