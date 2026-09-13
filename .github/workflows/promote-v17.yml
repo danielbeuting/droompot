@@ -1,0 +1,37 @@
+name: Promote Droompot v1.7
+
+on:
+  push:
+    branches: [v17-deploy-prep]
+    paths:
+      - '.github/workflows/promote-v17.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: v17-deploy-prep
+      - name: Diagnose uploaded archive parts
+        shell: bash
+        run: |
+          set -euo pipefail
+          head -c 10000 v17-upload/part01a.b64 > /tmp/p0
+          head -c 10000 v17-upload/part01b.b64 > /tmp/p1
+          head -c 20000 v17-upload/part02.b64 > /tmp/p2
+          head -c 4750 v17-upload/part03a1.b64 > /tmp/p3
+          head -c 4750 v17-upload/part03a2.b64 > /tmp/p4
+          head -c 9556 v17-upload/part03b.b64 > /tmp/p5
+          sha256sum /tmp/p0 /tmp/p1 /tmp/p2 /tmp/p3 /tmp/p4 /tmp/p5
+          echo 'EXPECTED p0 02b1065663c4c6d78a8a5e043b2d4e890f4ee8f78d0626850a5c2a0112af8ee2'
+          echo 'EXPECTED p1 daa04f6afd6cba047be7a21b0f9b919cfab94e854ce96a9cc5a0013ef4546c11'
+          echo 'EXPECTED p2 c70b44e6b1d9c8a9ff31eafb66d77e89e83103882772f8811577e6a32a17f7bf'
+          echo 'EXPECTED p3 125b0810e3248710080c4eda549f0820fa73c7da8e72ffe7a416f95e6bb8ef2a'
+          echo 'EXPECTED p4 8ecc26e5ebd28379a42da8b020ce88b2ede5f814fc5eb0a795dbab61c70d1ed3'
+          echo 'EXPECTED p5 9248076b4c21ff5478a2c6c17a442d87c71fd2166eb12bb06089e53e4d8e0557'
+          exit 1
