@@ -57,6 +57,7 @@ async function registerUniqueVisitor(){
 registerUniqueVisitor();
 function logoutAdmin(){
   localStorage.removeItem(ADMIN_SESSION_KEY);
+  sessionStorage.removeItem("droompot-admin-credentials");
   adminCredentials=null;
   settingsSnapshot=null;
   settingsDraft=null;
@@ -640,7 +641,18 @@ document.getElementById("wishlist-dreampot-btn").addEventListener("click",()=>sh
 
 document.getElementById("open-settings").addEventListener("click",()=>{
   if(isAdminLoggedIn()){
-    adminCredentials={username:"Annejet",password:"yuki"};
+    try{
+      const saved=JSON.parse(sessionStorage.getItem("droompot-admin-credentials")||"null");
+      if(saved?.username&&saved?.password)adminCredentials=saved;
+    }catch{}
+    if(!adminCredentials){
+      localStorage.removeItem(ADMIN_SESSION_KEY);
+      document.getElementById("settings-username").value="Annejet";
+      document.getElementById("settings-password").value="";
+      document.getElementById("settings-login-error").classList.remove("show");
+      show("settings-login");
+      return;
+    }
     settingsSnapshot=clone(state);
     settingsDraft=clone(state);
     render();
@@ -681,6 +693,7 @@ document.getElementById("settings-login-btn").addEventListener("click",async()=>
     });
     if(!response.ok)throw new Error("Unauthorized");
     adminCredentials={username,password};
+    sessionStorage.setItem("droompot-admin-credentials",JSON.stringify(adminCredentials));
     persistAdminLogin();
     await loadCentralState();
     settingsSnapshot=clone(state);
