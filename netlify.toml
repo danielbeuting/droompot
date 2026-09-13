@@ -1,3 +1,4 @@
+# Droompot v1.7 production
 [build]
   publish = "."
   functions = "netlify/functions"
