@@ -1,8 +1,8 @@
-name: Promote Droompot v1.7
+name: Promote Droompot v1.7 clean
 
 on:
   push:
-    branches: [v17-deploy-prep]
+    branches: [v17-clean]
     paths:
       - '.github/workflows/promote-v17.yml'
 
@@ -16,22 +16,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: v17-deploy-prep
-      - name: Diagnose uploaded archive parts
+          ref: v17-clean
+      - name: Reconstruct and promote v1.7
         shell: bash
         run: |
           set -euo pipefail
-          head -c 10000 v17-upload/part01a.b64 > /tmp/p0
-          head -c 10000 v17-upload/part01b.b64 > /tmp/p1
-          head -c 20000 v17-upload/part02.b64 > /tmp/p2
-          head -c 4750 v17-upload/part03a1.b64 > /tmp/p3
-          head -c 4750 v17-upload/part03a2.b64 > /tmp/p4
-          head -c 9556 v17-upload/part03b.b64 > /tmp/p5
-          sha256sum /tmp/p0 /tmp/p1 /tmp/p2 /tmp/p3 /tmp/p4 /tmp/p5
-          echo 'EXPECTED p0 02b1065663c4c6d78a8a5e043b2d4e890f4ee8f78d0626850a5c2a0112af8ee2'
-          echo 'EXPECTED p1 daa04f6afd6cba047be7a21b0f9b919cfab94e854ce96a9cc5a0013ef4546c11'
-          echo 'EXPECTED p2 c70b44e6b1d9c8a9ff31eafb66d77e89e83103882772f8811577e6a32a17f7bf'
-          echo 'EXPECTED p3 125b0810e3248710080c4eda549f0820fa73c7da8e72ffe7a416f95e6bb8ef2a'
-          echo 'EXPECTED p4 8ecc26e5ebd28379a42da8b020ce88b2ede5f814fc5eb0a795dbab61c70d1ed3'
-          echo 'EXPECTED p5 9248076b4c21ff5478a2c6c17a442d87c71fd2166eb12bb06089e53e4d8e0557'
-          exit 1
+          {
+            cat payload/part01a.b64
+            head -c 10000 payload/part01b.b64
+            cat payload/p2_0 payload/p2_1 payload/p2_2 payload/p2_3 payload/p2_4 payload/p2_5 payload/p2_6 payload/p2_7
+            cat payload/part03a1.b64 payload/part03a2.b64 payload/part03b.b64
+          } | base64 -d > /tmp/v17.tar.gz
+          echo '063d610ba20caf7e32573a5c50d8ff374d01b47fa1be6502bf6349ed164fce58  /tmp/v17.tar.gz' | sha256sum -c -
+          cp droompot-pig.png /tmp/droompot-pig.png
+          git rm -rf .
+          tar -xzf /tmp/v17.tar.gz
+          cp /tmp/droompot-pig.png droompot-pig.png
+          node --check app.js
+          node --check netlify/functions/dream-data.mjs
+          node --check netlify/functions/product-metadata.mjs
+          git add -A
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Droompot v1.7 pilot'
+          git push --force origin HEAD:main
