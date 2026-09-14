@@ -1,0 +1,59 @@
+name: Fix Droompot v1.7 Bol image and price extraction
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v17-bol-image-price-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Patch Bol extraction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('netlify/functions/product-metadata.mjs')
+          s=p.read_text()
+
+          old='''function firstBolImage(text=""){const decoded=decodeHtml(text).replace(/\\\\u002F/gi,'/').replace(/\\\\\\//g,'/');const patterns=[/https?:\\/\\/media\\.s-bol\\.com\\/[A-Za-z0-9_./?=&%+~-]+/ig,/https?:\\/\\/[^\\s"'<>]+s-bol\\.com[^\\s"'<>]+/ig];for(const rx of patterns){const matches=[...decoded.matchAll(rx)].map(m=>m[0].replace(/[),.;]+$/,''));const preferred=matches.find(u=>!/(logo|icon|sprite|avatar|placeholder|badge)/i.test(u));if(preferred)return preferred;if(matches[0])return matches[0];}return "";}'''
+          new='''function badBolImage(u=""){return !u||/(logo|icon|sprite|avatar|placeholder|badge|favicon|brand|header|footer|payment|service|usp|newsletter|bol-com|bol_logo)/i.test(u);}\nfunction firstBolImage(text=""){\n  const decoded=decodeHtml(text).replace(/\\\\u002F/gi,'/').replace(/\\\\\\//g,'/');\n  const all=[...decoded.matchAll(/https?:\\/\\/media\\.s-bol\\.com\\/[A-Za-z0-9_./?=&%+~:%-]+/ig)].map(m=>m[0].replace(/[),.;]+$/,''));\n  const uniq=[...new Set(all)];\n  const score=u=>{let n=0;if(/\\/(?:products?|images?|xl|large|zoom)\\//i.test(u))n+=50;if(/(?:550|600|800|1000|1200|1600|2000)x(?:550|600|800|1000|1200|1600|2000)/i.test(u))n+=35;if(/\\.(?:jpg|jpeg|png|webp)(?:\\?|$)/i.test(u))n+=20;if(/product/i.test(u))n+=20;if(badBolImage(u))n-=200;return n;};\n  return uniq.sort((a,b)=>score(b)-score(a)).find(u=>!badBolImage(u))||"";\n}'''
+          if old not in s: raise SystemExit('firstBolImage block not found')
+          s=s.replace(old,new,1)
+
+          marker='''function bolTitle(html,url){const candidates=[meta(html,"og:title"),meta(html,"twitter:title"),clean(html.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i)?.[1]?.replace(/<[^>]+>/g,' ')),clean(html.match(/data-test=["']title["'][^>]*>([\\s\\S]*?)<\\/[^>]+>/i)?.[1]?.replace(/<[^>]+>/g,' ')),clean(html.match(/"productTitle"\\s*:\\s*"([^\"]{3,400})"/i)?.[1]),clean(html.match(/"name"\\s*:\\s*"([^\"]{3,400})"/i)?.[1]),titleFromUrl(url)];for(let t of candidates){t=safeTitle(t);if(t&&t.length>2)return t;}return "";}'''
+          add=marker+'''\nfunction bolPrice(html=""){\n  const text=decodeHtml(html);\n  const candidates=[\n    meta(text,"product:price:amount"),meta(text,"og:price:amount"),meta(text,"price"),\n    text.match(/data-test=["']price[^"']*["'][^>]*>[\\s\\S]{0,180}?([0-9]{1,5}[,.][0-9]{2})/i)?.[1],\n    text.match(/"sellingPrice"\\s*:\\s*(?:\\{[^{}]{0,250}?"(?:amount|value)"\\s*:\\s*)?"?([0-9]+(?:[.,][0-9]{1,2})?)/i)?.[1],\n    text.match(/"currentPrice"\\s*:\\s*(?:\\{[^{}]{0,250}?"(?:amount|value)"\\s*:\\s*)?"?([0-9]+(?:[.,][0-9]{1,2})?)/i)?.[1],\n    text.match(/"price"\\s*:\\s*\\{[^{}]{0,300}?"(?:amount|value)"\\s*:\\s*"?([0-9]+(?:[.,][0-9]{1,2})?)/i)?.[1],\n    text.match(/(?:Prijs|price)[\\s\\S]{0,120}?€?\\s*([0-9]{1,5}[,.][0-9]{2})/i)?.[1]\n  ];\n  for(const c of candidates){const p=price(c||"");if(p&&p!=="0.00")return p;}\n  return "";\n}'''
+          if marker not in s: raise SystemExit('bolTitle marker not found')
+          s=s.replace(marker,add,1)
+
+          old='''async function fetchMicrolink(url){const api=`https://api.microlink.io/?url=${encodeURIComponent(url)}`;const {text}=await fetchText(api,{timeout:18000,headers:{"Accept":"application/json"}});const j=JSON.parse(text);const d=j?.data||{};const image=typeof d.image==="string"?d.image:(d.image?.url||d.logo?.url||"");const title=safeTitle(d.title||"");const p=price(d.price||d.description||"");return {title,price:p,image:clean(image)};}'''
+          new='''async function fetchMicrolink(url){const api=`https://api.microlink.io/?url=${encodeURIComponent(url)}`;const {text}=await fetchText(api,{timeout:18000,headers:{"Accept":"application/json"}});const j=JSON.parse(text);const d=j?.data||{};const image=typeof d.image==="string"?d.image:(d.image?.url||"");const title=safeTitle(d.title||"");const p=price(d.price||d.description||"");return {title,price:p,image:badBolImage(image)?"":clean(image)};}'''
+          if old not in s: raise SystemExit('microlink block not found')
+          s=s.replace(old,new,1)
+
+          old='''if(isBol){direct.title=bolTitle(html,url)||direct.title;direct.image=direct.image||firstBolImage(html);}'''
+          new='''if(isBol){direct.title=bolTitle(html,url)||direct.title;direct.price=direct.price||bolPrice(html);if(badBolImage(direct.image))direct.image="";direct.image=direct.image||firstBolImage(html);}'''
+          if old not in s: raise SystemExit('direct bol block not found')
+          s=s.replace(old,new,1)
+
+          old='''if(isBol){if(badTitle(data.title))data.title="";if(!data.title)data.title=titleFromUrl(u);if(!data.image||!data.title){try{data=merge(data,await fetchMicrolink(u));}catch{}}if(!data.image||!data.price){try{data=merge(data,await fetchBolReader(u));}catch(e){if(!directError)directError=e?.message||"bol fallback failed";}}if(badTitle(data.title))data.title=titleFromUrl(u);}'''
+          new='''if(isBol){if(badTitle(data.title))data.title="";if(badBolImage(data.image))data.image="";if(!data.title)data.title=titleFromUrl(u);if(!data.image||!data.title||!data.price){try{const micro=await fetchMicrolink(u);if(!data.title&&micro.title)data.title=micro.title;if(!data.price&&micro.price)data.price=micro.price;if(!data.image&&micro.image&&!badBolImage(micro.image))data.image=micro.image;}catch{}}if(!data.image||!data.price){try{const reader=await fetchBolReader(u);if(!data.price&&reader.price)data.price=reader.price;if(!data.image&&reader.image&&!badBolImage(reader.image))data.image=reader.image;if(!data.title&&reader.title)data.title=reader.title;}catch(e){if(!directError)directError=e?.message||"bol fallback failed";}}if(badTitle(data.title))data.title=titleFromUrl(u);if(badBolImage(data.image))data.image="";}'''
+          if old not in s: raise SystemExit('final bol block not found')
+          s=s.replace(old,new,1)
+
+          p.write_text(s)
+          PY
+          node --check netlify/functions/product-metadata.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/product-metadata.mjs
+          git commit -m "Improve Bol product image and price extraction"
+          git push origin main
