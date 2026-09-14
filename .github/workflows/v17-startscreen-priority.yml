@@ -1,0 +1,130 @@
+name: Prioritize wishlist on start screen
+on:
+  push:
+    paths:
+      - '.github/workflows/v17-startscreen-priority.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Append start screen overrides
+        run: |
+          cat <<'EOF' >> style.css
+
+/* v1.7 start screen priority: wishlist first, Droompot visually locked */
+#screen-start.start-screen{
+  padding-top:env(safe-area-inset-top);
+}
+#screen-start .start-wrap{
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:38px 0 calc(26px + env(safe-area-inset-bottom));
+}
+#screen-start .start-brand-pig{
+  margin-bottom:10px;
+}
+#screen-start .start-copy{
+  margin-bottom:28px;
+}
+#screen-start .start-choice-grid{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  align-items:center;
+}
+#screen-start .start-choice.wishlist{
+  order:1;
+  width:100%;
+  min-height:138px;
+  padding:24px 22px !important;
+  border-radius:28px !important;
+  grid-template-columns:72px 1fr 26px !important;
+  box-shadow:0 18px 42px rgba(205,145,25,.25) !important;
+  transform:none !important;
+}
+#screen-start .start-choice.wishlist .start-choice-icon{
+  width:72px !important;
+  height:72px !important;
+  border-radius:22px !important;
+  font-size:36px !important;
+}
+#screen-start .start-choice.wishlist strong{
+  font-size:20px !important;
+  line-height:1.15;
+}
+#screen-start .start-choice.wishlist small{
+  font-size:12px !important;
+  margin-top:5px;
+  display:block;
+}
+#screen-start .start-choice.dream{
+  order:2;
+  width:72%;
+  min-height:64px !important;
+  margin-top:30px;
+  padding:10px 13px !important;
+  border:1px solid #d7d7db !important;
+  border-radius:18px !important;
+  grid-template-columns:38px 1fr auto !important;
+  background:#ececef !important;
+  color:#8c8c93 !important;
+  box-shadow:none !important;
+  filter:grayscale(1);
+  opacity:.82;
+}
+#screen-start .start-choice.dream .start-choice-icon{
+  width:38px !important;
+  height:38px !important;
+  border-radius:12px !important;
+  background:#dedee2 !important;
+}
+#screen-start .start-choice.dream .start-choice-icon img{
+  width:34px !important;
+  height:34px !important;
+  opacity:.65;
+}
+#screen-start .start-choice.dream strong{
+  font-size:12px !important;
+  color:#77777e !important;
+}
+#screen-start .start-choice.dream small{
+  font-size:9px !important;
+  color:#9b9ba1 !important;
+}
+#screen-start .start-choice.dream b{
+  color:#aaaab0 !important;
+}
+#screen-start .start-choice.dream:after{
+  content:'Nog niet beschikbaar';
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  top:-19px;
+  color:#9a9aa0;
+  font-size:9px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  white-space:nowrap;
+}
+#screen-start .start-choice.dream{
+  position:relative;
+}
+EOF
+      - name: Commit styling
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add style.css
+          git commit -m 'Prioritize wishlist on start screen'
+          git push origin main
