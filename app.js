@@ -634,10 +634,10 @@ document.getElementById("back-home-btn").addEventListener("click",()=>{
 });
 
 
-document.getElementById("start-dream-btn").addEventListener("click",()=>show("home"));
-document.getElementById("start-wishlist-btn").addEventListener("click",()=>{renderWishlist();show("wishlist")});
-document.getElementById("home-wishlist-btn").addEventListener("click",()=>{renderWishlist();show("wishlist")});
-document.getElementById("wishlist-dreampot-btn").addEventListener("click",()=>show("home"));
+document.getElementById("start-dream-btn").addEventListener("click",()=>{show("home");setTimeout(showDemoNoticeOnce,120)});
+document.getElementById("start-wishlist-btn").addEventListener("click",async()=>{show("wishlist");await refreshWishlistFromCentral()});
+document.getElementById("home-wishlist-btn").addEventListener("click",async()=>{show("wishlist");await refreshWishlistFromCentral()});
+document.getElementById("wishlist-dreampot-btn").addEventListener("click",()=>{show("home");setTimeout(showDemoNoticeOnce,120)});
 
 document.getElementById("open-settings").addEventListener("click",()=>{
   if(isAdminLoggedIn()){
@@ -953,6 +953,26 @@ document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click",()=
 }));
 
 let wishFilter="all";
+async function setWishClaimedOnline(id,claimed){
+  const response=await fetch("/.netlify/functions/dream-data",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({action:"wish-claim",wishId:id,claimed:Boolean(claimed)})
+  });
+  if(!response.ok)throw new Error("Wish claim save failed");
+  const payload=await response.json();
+  if(payload?.data){
+    state={...clone(DEFAULT),...payload.data};
+    normalizeGoalOrder();
+    save();
+    return true;
+  }
+  return false;
+}
+async function refreshWishlistFromCentral(){
+  await loadCentralState();
+  renderWishlist();
+}
 function renderWishlist(){
   applyPhoto(document.getElementById("wishlist-avatar"));
   const list=document.getElementById("wishlist-list");if(!list)return;
@@ -977,9 +997,24 @@ function renderWishlist(){
       </div>`;
     list.appendChild(card)
   });
-  list.querySelectorAll("[data-claim-wish]").forEach(b=>b.addEventListener("click",()=>{
-    const w=state.wishes.find(x=>x.id===Number(b.dataset.claimWish));if(w){w.claimed=!w.claimed;
-      if(w.claimed)celebrateClaimedWish(w.title);save();renderWishlist();toast(w.claimed?"Wens afgestreept":"Wens weer vrij")}
+  list.querySelectorAll("[data-claim-wish]").forEach(b=>b.addEventListener("click",async()=>{
+    const id=Number(b.dataset.claimWish);
+    const w=state.wishes.find(x=>x.id===id);
+    if(!w)return;
+    const next=!w.claimed;
+    b.disabled=true;
+    try{
+      const ok=await setWishClaimedOnline(id,next);
+      if(!ok)throw new Error("Niet opgeslagen");
+      const updated=state.wishes.find(x=>x.id===id);
+      if(updated?.claimed)celebrateClaimedWish(updated.title);
+      renderWishlist();
+      toast(updated?.claimed?"Wens afgestreept ✓":"Wens weer vrij",true);
+    }catch(err){
+      console.error(err);
+      toast("Afstrepen kon niet online worden opgeslagen");
+      b.disabled=false;
+    }
   }));
   list.querySelectorAll("[data-open-wish]").forEach(b=>b.addEventListener("click",()=>{
     const w=state.wishes.find(x=>x.id===Number(b.dataset.openWish));if(w&&w.link)window.open(w.link,"_blank")
@@ -1497,9 +1532,15 @@ function closeDemoNotice(){
   document.getElementById("demo-notice-overlay")?.classList.remove("open");
   document.getElementById("demo-notice-modal")?.classList.remove("open");
 }
+let demoNoticeShown=false;
+function showDemoNoticeOnce(){
+  if(demoNoticeShown)return;
+  demoNoticeShown=true;
+  maybeShowDemoNotice();
+}
 document.getElementById("demo-notice-close")?.addEventListener("click",closeDemoNotice);
 document.getElementById("demo-notice-overlay")?.addEventListener("click",closeDemoNotice);
-setTimeout(maybeShowDemoNotice,220);
+
 
 
 // v1.4: child-specific Droompot share copy.

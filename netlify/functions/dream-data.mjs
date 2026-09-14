@@ -55,6 +55,15 @@ export default async(req)=>{
       if(!ids.includes(visitorId)){ids.push(visitorId);if(ids.length>10000)ids.splice(0,ids.length-10000);await store.setJSON(VISITOR_KEY,{ids})}
       return json({ok:true,uniqueVisitors:ids.length});
     }
+    if(body?.action==="wish-claim"){
+      const current=await store.get(DATA_KEY,{type:"json"});
+      if(!current||!Array.isArray(current.wishes))return json({error:"Droompot is nog niet geïnitialiseerd"},409);
+      const wish=current.wishes.find(w=>String(w.id)===String(body.wishId));
+      if(!wish)return json({error:"Wish not found"},404);
+      wish.claimed=Boolean(body.claimed);
+      await store.setJSON(DATA_KEY,current);
+      return json({ok:true,data:current});
+    }
     if(body?.action==="contribution"){
       const amount=Number(body.amount);
       if(!Number.isFinite(amount)||amount<=0||amount>10000)return json({error:"Invalid amount"},400);
