@@ -1,121 +1,34 @@
-function decodeHtml(v=""){return String(v??"").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\\u002F/gi,"/").replace(/\\u0026/gi,"&").replace(/\\\//g,"/").replace(/&amp%3B/gi,"&");}
+function decodeHtml(v=""){return String(v??"").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'");}
 function clean(v=""){return decodeHtml(v).replace(/\s+/g," ").trim();}
-function meta(html,key){for(const p of [new RegExp(`<meta[^>]+(?:property|name|itemprop)=["']${key}["'][^>]+content=["']([^"']+)["']`,"i"),new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name|itemprop)=["']${key}["']`,"i")]){const m=html.match(p);if(m?.[1])return clean(m[1]);}return "";}
-function price(v){const s=clean(v);let m=s.match(/(?:€|EUR|\$|USD|£|GBP)?\s*([0-9]{1,7}(?:[.,][0-9]{1,2})?)/i);if(!m)return "";let x=m[1];if(x.includes(",")&&x.includes(".")){x=x.lastIndexOf(",")>x.lastIndexOf(".")?x.replace(/\./g,"").replace(",","."):x.replace(/,/g,"");}else x=x.replace(",",".");const n=Number(x);return Number.isFinite(n)?n.toFixed(2):"";}
-function walk(x,out=[]){if(Array.isArray(x))x.forEach(v=>walk(v,out));else if(x&&typeof x==="object"){out.push(x);Object.values(x).forEach(v=>walk(v,out));}return out;}
-function badTitle(v=""){const t=clean(v);return !t||/ip address .* is blocked|access denied|forbidden|robot check|captcha|temporarily unavailable|just a moment/i.test(t);}
-function safeTitle(v=""){let t=clean(v).replace(/\s*\|\s*bol(?:\.com)?.*$/i,'').replace(/\s*-\s*bol(?:\.com)?.*$/i,'');if(badTitle(t))return "";const words=t.split(/\s+/).filter(Boolean);if(words.length>8)t=words.slice(0,8).join(" ");return t;}
-function ldProduct(html){for(const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)){try{const parsed=JSON.parse(decodeHtml(m[1]).trim().replace(/;$/,"").replace(/&quot;/g,'"'));for(const o of walk(parsed)){const t=Array.isArray(o?.["@type"])?o["@type"]:[o?.["@type"]];if(t.map(v=>String(v).toLowerCase()).includes("product")){let image=o.image;if(Array.isArray(image))image=image[0];if(image&&typeof image==="object")image=image.url||image.contentUrl||"";let offers=Array.isArray(o.offers)?o.offers[0]:o.offers;return {title:safeTitle(o.name),image:clean(image),price:price(offers?.price||offers?.lowPrice||offers?.highPrice||offers?.priceSpecification?.price)};}}}catch{}}return {};}
-function openGraph(html){return {title:safeTitle(meta(html,"og:title")||meta(html,"twitter:title")||clean(html.match(/<title[^>]*>(.*?)<\/title>/is)?.[1])),image:meta(html,"og:image")||meta(html,"twitter:image"),price:price(meta(html,"product:price:amount")||meta(html,"og:price:amount")||meta(html,"price"))};}
-function merge(a,b){return {title:safeTitle(a?.title)||safeTitle(b?.title)||"",price:a?.price||b?.price||"",image:a?.image||b?.image||""};}
-function embedded(html){const titleKeys=["productTitle","productName","displayName","name","title"];const priceKeys=["sellingPrice","currentPrice","salesPrice","price","value"];const imageKeys=["imageUrl","primaryImage","image","largeImageUrl","zoomImageUrl","src"];let title="",p="",image="";for(const k of titleKeys){const m=html.match(new RegExp(`"${k}"\\s*:\\s*"([^"]{3,400})"`,`i`));if(m){const c=safeTitle(m[1]);if(c&&!['bol','bol.com','hema','hema.nl','intertoys'].includes(c.toLowerCase())){title=c;break;}}}for(const k of priceKeys){for(const m of html.matchAll(new RegExp(`"${k}"\\s*:\\s*"?([0-9]+(?:[.,][0-9]{1,2})?)"?`,`ig`))){const c=price(m[1]);if(c&&c!=="0.00"){p=c;break;}}if(p)break;}for(const k of imageKeys){const m=html.match(new RegExp(`"${k}"\\s*:\\s*"(https?:[^\"]+)"`,`i`));if(m){const candidate=decodeHtml(m[1]);if(/^https?:\/\//i.test(candidate)){image=candidate;break;}}}return {title,price:p,image};}
-function amazon(html){const text=id=>clean(html.match(new RegExp(`<[^>]+id=["']${id}["'][^>]*>([\\s\\S]*?)<\\/[^>]+>`,`i`))?.[1]?.replace(/<[^>]+>/g," "));const attr=(id,name)=>clean(html.match(new RegExp(`<[^>]+id=["']${id}["'][^>]*${name}=["']([^"']+)["']`,`i`))?.[1]);let p="";for(const id of ["priceblock_ourprice","priceblock_dealprice","corePrice_feature_div","corePriceDisplay_desktop_feature_div","apex_desktop"]){p=price(text(id));if(p)break;}if(!p){const w=clean(html.match(/class=["'][^"']*a-price-whole[^"']*["'][^>]*>([^<]+)/i)?.[1]);const f=clean(html.match(/class=["'][^"']*a-price-fraction[^"']*["'][^>]*>([^<]+)/i)?.[1]);if(w)p=price(w+(f?`.`+f:""));}return {title:safeTitle(text("productTitle")),image:attr("landingImage","data-old-hires")||attr("landingImage","src"),price:p};}
-function titleFromUrl(url){try{const parts=new URL(url).pathname.split('/').filter(Boolean);const pIndex=parts.indexOf('p');let slug=(pIndex>=0?parts[pIndex+1]:parts.at(-2))||"";slug=decodeURIComponent(slug).replace(/[-_]+/g,' ').replace(/\b\d{6,}\b/g,' ').replace(/\s+/g,' ').trim();if(!slug)return "";return slug.split(' ').map(w=>/^[A-Z0-9]{2,}$/.test(w)?w:w.charAt(0).toUpperCase()+w.slice(1)).join(' ');}catch{return "";}}
-function badBolImage(u=""){return !u||/(logo|icon|sprite|avatar|placeholder|badge|favicon|brand|header|footer|payment|service|usp|newsletter|bol-com|bol_logo)/i.test(u);}
-function firstBolImage(text=""){
-  const decoded=decodeHtml(text).replace(/\\u002F/gi,'/').replace(/\\\//g,'/');
-  const all=[...decoded.matchAll(/https?:\/\/media\.s-bol\.com\/[A-Za-z0-9_./?=&%+~:%-]+/ig)].map(m=>m[0].replace(/[),.;]+$/,''));
-  const uniq=[...new Set(all)];
-  const score=u=>{let n=0;if(/\/(?:products?|images?|xl|large|zoom)\//i.test(u))n+=50;if(/(?:550|600|800|1000|1200|1600|2000)x(?:550|600|800|1000|1200|1600|2000)/i.test(u))n+=35;if(/\.(?:jpg|jpeg|png|webp)(?:\?|$)/i.test(u))n+=20;if(/product/i.test(u))n+=20;if(badBolImage(u))n-=200;return n;};
-  return uniq.sort((a,b)=>score(b)-score(a)).find(u=>!badBolImage(u))||"";
-}
-function bolTitle(html,url){const candidates=[meta(html,"og:title"),meta(html,"twitter:title"),clean(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]?.replace(/<[^>]+>/g,' ')),clean(html.match(/data-test=["']title["'][^>]*>([\s\S]*?)<\/[^>]+>/i)?.[1]?.replace(/<[^>]+>/g,' ')),clean(html.match(/"productTitle"\s*:\s*"([^"]{3,400})"/i)?.[1]),clean(html.match(/"name"\s*:\s*"([^"]{3,400})"/i)?.[1]),titleFromUrl(url)];for(let t of candidates){t=safeTitle(t);if(t&&t.length>2)return t;}return "";}
-function bolPrice(html=""){
-  const text=decodeHtml(html);
-  const candidates=[
-    meta(text,"product:price:amount"),meta(text,"og:price:amount"),meta(text,"price"),
-    text.match(/data-test=["']price[^"']*["'][^>]*>[\s\S]{0,180}?([0-9]{1,5}[,.][0-9]{2})/i)?.[1],
-    text.match(/"sellingPrice"\s*:\s*(?:\{[^{}]{0,250}?"(?:amount|value)"\s*:\s*)?"?([0-9]+(?:[.,][0-9]{1,2})?)/i)?.[1],
-    text.match(/"currentPrice"\s*:\s*(?:\{[^{}]{0,250}?"(?:amount|value)"\s*:\s*)?"?([0-9]+(?:[.,][0-9]{1,2})?)/i)?.[1],
-    text.match(/"price"\s*:\s*\{[^{}]{0,300}?"(?:amount|value)"\s*:\s*"?([0-9]+(?:[.,][0-9]{1,2})?)/i)?.[1],
-    text.match(/(?:Prijs|price)[\s\S]{0,120}?€?\s*([0-9]{1,5}[,.][0-9]{2})/i)?.[1]
-  ];
-  for(const c of candidates){const p=price(c||"");if(p&&p!=="0.00")return p;}
-  return "";
-}
-async function fetchText(url,{timeout=15000,headers={}}={}){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeout);try{const r=await fetch(url,{redirect:"follow",signal:controller.signal,headers});if(!r.ok)throw new Error(`HTTP ${r.status}`);return {text:await r.text(),url:r.url};}finally{clearTimeout(timer);}}
-async function fetchPage(url){return fetchText(url,{timeout:4000,headers:{"User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1","Accept":"text/html,application/xhtml+xml","Accept-Language":"nl-NL,nl;q=0.9,en;q=0.8","Cache-Control":"no-cache","Referer":"https://www.google.com/"}});}
-function bolFromReader(markdown,url){const text=String(markdown||"");if(/ip address .* is blocked|access denied|forbidden/i.test(text))return {title:titleFromUrl(url),price:"",image:""};const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);let title="";for(const line of lines){const m=line.match(/^#\s+(.{3,250})$/);if(m){const c=safeTitle(m[1]);if(c&&!/bol\.com|^bol$/i.test(c)){title=c;break;}}}if(!title){const m=text.match(/^Title:\s*(.+)$/mi);if(m)title=safeTitle(m[1]);}if(!title)title=titleFromUrl(url);let p="";for(const rx of [/De prijs van dit product is\s*['“]?([0-9]+)['”]?\s*euro(?:\s*en\s*['“]?([0-9]{1,2})['”]?\s*cent)?/i,/Prijsinformatie en bestellen[\s\S]{0,700}?([0-9]{1,5}[,.][0-9]{2})/i,/\b€\s*([0-9]{1,5}(?:[,.][0-9]{2})?)/i,/\b([0-9]{1,5}[,.][0-9]{2})\b/]){const m=text.match(rx);if(m){p=m[2]!=null?`${m[1]}.${String(m[2]).padStart(2,'0')}`:price(m[1]);if(p)break;}}return {title,price:p,image:firstBolImage(text)};}
-async function fetchBolReader(url){const {text}=await fetchText(`https://r.jina.ai/${url}`,{timeout:4000,headers:{"Accept":"text/plain","X-Return-Format":"markdown"}});return bolFromReader(text,url);}
-async function fetchBolViaProxy(url){
-  const proxies=[
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-  ];
-  for(const proxy of proxies){
-    try{
-      const {text}=await fetchText(proxy,{timeout:4000,headers:{"Accept":"text/html,application/xhtml+xml","Accept-Language":"nl-NL,nl;q=0.9"}});
-      if(/ip address .* is blocked|access denied|forbidden|captcha|robot check/i.test(text))continue;
-      const title=bolTitle(text,url);
-      const priceValue=bolPrice(text);
-      const image=firstBolImage(text);
-      if(title||priceValue||image)return {title,price:priceValue,image};
-    }catch{}
-  }
-  return {};
-}
-async function fetchMicrolink(url){
-  const base=new URL("https://api.microlink.io/");
-  base.searchParams.set("url",url);
-  base.searchParams.set("meta","true");
-  base.searchParams.set("prerender","true");
-  base.searchParams.set("waitUntil","networkidle2");
-  base.searchParams.set("data.rendered.evaluate",`async () => {
-    const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
-    await sleep(1200);
-    const body=(document.body?.innerText||"").replace(/\s+/g," ");
-    const heading=(document.querySelector("h1")?.textContent||document.title||"").trim();
-    let price="";
-    let m=body.match(/De prijs van dit product is\s*(\d{1,5})\s*euro(?:\s*en\s*(\d{1,2})\s*cent)?/i);
-    if(m) price=m[1]+"."+String(m[2]||"00").padStart(2,"0");
-    if(!price){
-      m=body.match(/Prijsinformatie en bestellen[\s\S]{0,350}?(\d{1,5}[,.]\d{2})/i);
-      if(m) price=m[1].replace(",",".");
-    }
-    if(!price){
-      const priceNode=[...document.querySelectorAll('[data-test*="price"], [class*="price"]')]
-        .map(el=>(el.textContent||"").trim())
-        .find(v=>/\d{1,5}[,.]\d{2}/.test(v));
-      const pm=priceNode?.match(/(\d{1,5}[,.]\d{2})/);
-      if(pm) price=pm[1].replace(",",".");
-    }
-    const bad=/(logo|icon|sprite|avatar|placeholder|badge|favicon|brand|header|footer|payment|service|usp|newsletter|bol-com|bol_logo)/i;
-    const titleWords=heading.toLowerCase().split(/\s+/).filter(w=>w.length>3);
-    const images=[...document.images].map(img=>({
-      src:img.currentSrc||img.src||"",
-      alt:img.alt||"",
-      w:img.naturalWidth||img.width||0,
-      h:img.naturalHeight||img.height||0
-    })).filter(x=>/media\.s-bol\.com/i.test(x.src)&&!bad.test(x.src));
-    const score=x=>{
-      let n=0;
-      if(x.w>=400||x.h>=400)n+=40;
-      if(x.w>=800||x.h>=800)n+=25;
-      const a=x.alt.toLowerCase();
-      n+=titleWords.slice(0,5).filter(w=>a.includes(w)).length*20;
-      if(/product afbeelding|lego|ninjago|wyldfyre/i.test(a))n+=30;
-      if(/speciaal in het zonnetje|actie|banner/i.test(a))n-=100;
-      return n;
-    };
-    images.sort((a,b)=>score(b)-score(a));
-    return JSON.stringify({title:heading,price,image:images[0]?.src||""});
-  }`);
-  const {text}=await fetchText(base.toString(),{timeout:12000,headers:{"Accept":"application/json"}});
-  const j=JSON.parse(text);
-  const d=j?.data||{};
-  let extra={};
-  const raw=d.rendered;
-  try{
-    if(typeof raw==="string")extra=JSON.parse(raw);
-    else if(typeof raw?.value==="string")extra=JSON.parse(raw.value);
-    else if(raw&&typeof raw==="object")extra=raw;
-  }catch{}
-  const imageMeta=typeof d.image==="string"?d.image:(d.image?.url||"");
-  const title=safeTitle(extra.title||d.title||"");
-  const p=price(extra.price||d.price||d.description||"");
-  let image=clean(extra.image||imageMeta||"");
-  if(badBolImage(image))image="";
-  return {title,price:p,image};
+function safeTitle(v=""){const words=clean(v).replace(/\s*\|\s*[^|]+$/,'').split(/\s+/).filter(Boolean);return words.slice(0,8).join(' ');}
+function meta(html,key){for(const rx of [new RegExp(`<meta[^>]+(?:property|name|itemprop)=["']${key}["'][^>]+content=["']([^"']+)["']`,`i`),new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name|itemprop)=["']${key}["']`,`i`)]){const m=html.match(rx);if(m?.[1])return clean(m[1]);}return "";}
+function numberPrice(v){const m=clean(v).match(/([0-9]{1,7}(?:[.,][0-9]{1,2})?)/);if(!m)return "";const n=Number(m[1].replace(',','.'));return Number.isFinite(n)?n.toFixed(2):"";}
+function walk(x,out=[]){if(Array.isArray(x))x.forEach(v=>walk(v,out));else if(x&&typeof x==='object'){out.push(x);Object.values(x).forEach(v=>walk(v,out));}return out;}
+function ldProduct(html){for(const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)){try{const parsed=JSON.parse(m[1]);for(const o of walk(parsed)){const types=Array.isArray(o?.['@type'])?o['@type']:[o?.['@type']];if(types.some(t=>String(t).toLowerCase()==='product')){let image=o.image;if(Array.isArray(image))image=image[0];if(image&&typeof image==='object')image=image.url||image.contentUrl||'';const offers=Array.isArray(o.offers)?o.offers[0]:o.offers;return {title:safeTitle(o.name||''),image:clean(image||''),price:numberPrice(offers?.price||offers?.lowPrice||'')};}}}catch{}}return {};}
+async function fetchText(url,timeout=9000){const c=new AbortController();const t=setTimeout(()=>c.abort(),timeout);try{const r=await fetch(url,{redirect:'follow',signal:c.signal,headers:{'User-Agent':'Mozilla/5.0','Accept-Language':'nl-NL,nl;q=0.9,en;q=0.8'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return {text:await r.text(),url:r.url};}finally{clearTimeout(t);}}
+function titleFromBolUrl(url){try{const parts=new URL(url).pathname.split('/').filter(Boolean);const i=parts.indexOf('p');const slug=(i>=0?parts[i+1]:parts.at(-2))||'';return safeTitle(decodeURIComponent(slug).replace(/[-_]+/g,' '));}catch{return ''}}
+function productCodeFromBolUrl(url){try{const parts=new URL(url).pathname.split('/').filter(Boolean);const i=parts.indexOf('p');const slug=(i>=0?parts[i+1]:parts.at(-2))||'';const nums=[...slug.matchAll(/(?:^|[-_])(\d{4,6})(?=$|[-_])/g)].map(m=>m[1]);return nums.at(-1)||'';}catch{return ''}}
+function legoProductLink(html,code){const rx=new RegExp(`https?:\\/\\/www\\.lego\\.com\\/nl-nl\\/product\\/[^"'<> ]*${code}[^"'<> ]*`,'i');return clean(html.match(rx)?.[0]||'');}
+async function bolFallback(url){const title=titleFromBolUrl(url);const code=productCodeFromBolUrl(url);let image='';
+  if(/lego/i.test(title)&&code){try{const search=`https://www.lego.com/nl-nl/search?q=${encodeURIComponent(code)}`;const {text}=await fetchText(search);const productUrl=legoProductLink(text,code);if(productUrl){const {text:html}=await fetchText(productUrl);image=meta(html,'og:image')||meta(html,'twitter:image')||ldProduct(html).image||'';}}catch{}}
+  return {title,price:'',image,manualPrice:true,productCode:code,source:image?'external-product-page':'url-only'};
 }
 
-export default async(req)=>{const u=new URL(req.url).searchParams.get("url");if(!u||!/^https?:\/\//i.test(u))return Response.json({error:"Invalid URL"},{status:400});let input;try{input=new URL(u);}catch{return Response.json({error:"Invalid URL"},{status:400});}const originalHost=input.hostname.toLowerCase();const isBol=originalHost.includes("bol.com");let direct={},finalUrl=u,directError="";try{const {text:html,url}=await fetchPage(u);finalUrl=url;const host=new URL(url).hostname.toLowerCase();direct=merge(ldProduct(html),openGraph(html));direct=merge(direct,embedded(html));if(isBol){direct.title=bolTitle(html,url)||direct.title;direct.price=direct.price||bolPrice(html);if(badBolImage(direct.image))direct.image="";direct.image=direct.image||firstBolImage(html);}if(host.includes("amazon."))direct=merge(direct,amazon(html));}catch(e){directError=e?.message||"direct fetch failed";}let data=direct;if(isBol){if(badTitle(data.title))data.title="";if(badBolImage(data.image))data.image="";if(!data.title)data.title=titleFromUrl(u);if(!data.image||!data.title||!data.price){try{const micro=await fetchMicrolink(u);if(!data.title&&micro.title)data.title=micro.title;if(!data.price&&micro.price)data.price=micro.price;if(!data.image&&micro.image&&!badBolImage(micro.image))data.image=micro.image;}catch{}}if(!data.image||!data.price){try{const proxied=await fetchBolViaProxy(u);if(!data.title&&proxied.title)data.title=proxied.title;if(!data.price&&proxied.price)data.price=proxied.price;if(!data.image&&proxied.image&&!badBolImage(proxied.image))data.image=proxied.image;}catch{}}if(!data.image||!data.price){try{const reader=await fetchBolReader(u);if(!data.price&&reader.price)data.price=reader.price;if(!data.image&&reader.image&&!badBolImage(reader.image))data.image=reader.image;if(!data.title&&reader.title)data.title=reader.title;}catch(e){if(!directError)directError=e?.message||"bol fallback failed";}}if(badTitle(data.title))data.title=titleFromUrl(u);if(badBolImage(data.image))data.image="";}const host=(()=>{try{return new URL(finalUrl).hostname.toLowerCase();}catch{return originalHost;}})();const source=isBol?"bol":host.includes("amazon.")?"amazon":host.includes("intertoys.")?"intertoys":host.includes("hema.")?"hema":"generic";if(!data.title&&!data.price&&!data.image)return Response.json({error:`Productgegevens konden niet worden opgehaald${directError?`: ${directError}`:""}`},{status:502});return Response.json({...data,source,domain:host});};
+export default async(req)=>{
+  const raw=new URL(req.url).searchParams.get('url');
+  if(!raw||!/^https?:\/\//i.test(raw))return Response.json({error:'Invalid URL'},{status:400});
+  let u;try{u=new URL(raw);}catch{return Response.json({error:'Invalid URL'},{status:400});}
+  if(u.hostname.toLowerCase().includes('bol.com'))return Response.json(await bolFallback(raw));
+
+  try{
+    const {text:html}=await fetchText(raw);
+    const ld=ldProduct(html);
+    const title=ld.title||safeTitle(meta(html,'og:title')||meta(html,'twitter:title')||html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]||'');
+    const image=ld.image||meta(html,'og:image')||meta(html,'twitter:image')||'';
+    const price=ld.price||numberPrice(meta(html,'product:price:amount')||meta(html,'price')||'');
+    if(!title&&!image&&!price)return Response.json({error:'Geen productgegevens gevonden'},{status:502});
+    return Response.json({title,price,image,source:'direct'});
+  }catch(e){return Response.json({error:e?.message||'Ophalen mislukt'},{status:502});}
+};
+
+export const config={path:'/api/product-metadata'};
