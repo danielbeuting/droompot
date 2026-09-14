@@ -54,6 +54,68 @@ async function fetchBolViaProxy(url){
   }
   return {};
 }
-async function fetchMicrolink(url){const api=`https://api.microlink.io/?url=${encodeURIComponent(url)}`;const {text}=await fetchText(api,{timeout:4000,headers:{"Accept":"application/json"}});const j=JSON.parse(text);const d=j?.data||{};const image=typeof d.image==="string"?d.image:(d.image?.url||"");const title=safeTitle(d.title||"");const p=price(d.price||d.description||"");return {title,price:p,image:badBolImage(image)?"":clean(image)};}
+async function fetchMicrolink(url){
+  const base=new URL("https://api.microlink.io/");
+  base.searchParams.set("url",url);
+  base.searchParams.set("meta","true");
+  base.searchParams.set("prerender","true");
+  base.searchParams.set("waitUntil","networkidle2");
+  base.searchParams.set("data.rendered.evaluate",`async () => {
+    const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+    await sleep(1200);
+    const body=(document.body?.innerText||"").replace(/\s+/g," ");
+    const heading=(document.querySelector("h1")?.textContent||document.title||"").trim();
+    let price="";
+    let m=body.match(/De prijs van dit product is\s*(\d{1,5})\s*euro(?:\s*en\s*(\d{1,2})\s*cent)?/i);
+    if(m) price=m[1]+"."+String(m[2]||"00").padStart(2,"0");
+    if(!price){
+      m=body.match(/Prijsinformatie en bestellen[\s\S]{0,350}?(\d{1,5}[,.]\d{2})/i);
+      if(m) price=m[1].replace(",",".");
+    }
+    if(!price){
+      const priceNode=[...document.querySelectorAll('[data-test*="price"], [class*="price"]')]
+        .map(el=>(el.textContent||"").trim())
+        .find(v=>/\d{1,5}[,.]\d{2}/.test(v));
+      const pm=priceNode?.match(/(\d{1,5}[,.]\d{2})/);
+      if(pm) price=pm[1].replace(",",".");
+    }
+    const bad=/(logo|icon|sprite|avatar|placeholder|badge|favicon|brand|header|footer|payment|service|usp|newsletter|bol-com|bol_logo)/i;
+    const titleWords=heading.toLowerCase().split(/\s+/).filter(w=>w.length>3);
+    const images=[...document.images].map(img=>({
+      src:img.currentSrc||img.src||"",
+      alt:img.alt||"",
+      w:img.naturalWidth||img.width||0,
+      h:img.naturalHeight||img.height||0
+    })).filter(x=>/media\.s-bol\.com/i.test(x.src)&&!bad.test(x.src));
+    const score=x=>{
+      let n=0;
+      if(x.w>=400||x.h>=400)n+=40;
+      if(x.w>=800||x.h>=800)n+=25;
+      const a=x.alt.toLowerCase();
+      n+=titleWords.slice(0,5).filter(w=>a.includes(w)).length*20;
+      if(/product afbeelding|lego|ninjago|wyldfyre/i.test(a))n+=30;
+      if(/speciaal in het zonnetje|actie|banner/i.test(a))n-=100;
+      return n;
+    };
+    images.sort((a,b)=>score(b)-score(a));
+    return JSON.stringify({title:heading,price,image:images[0]?.src||""});
+  }`);
+  const {text}=await fetchText(base.toString(),{timeout:12000,headers:{"Accept":"application/json"}});
+  const j=JSON.parse(text);
+  const d=j?.data||{};
+  let extra={};
+  const raw=d.rendered;
+  try{
+    if(typeof raw==="string")extra=JSON.parse(raw);
+    else if(typeof raw?.value==="string")extra=JSON.parse(raw.value);
+    else if(raw&&typeof raw==="object")extra=raw;
+  }catch{}
+  const imageMeta=typeof d.image==="string"?d.image:(d.image?.url||"");
+  const title=safeTitle(extra.title||d.title||"");
+  const p=price(extra.price||d.price||d.description||"");
+  let image=clean(extra.image||imageMeta||"");
+  if(badBolImage(image))image="";
+  return {title,price:p,image};
+}
 
 export default async(req)=>{const u=new URL(req.url).searchParams.get("url");if(!u||!/^https?:\/\//i.test(u))return Response.json({error:"Invalid URL"},{status:400});let input;try{input=new URL(u);}catch{return Response.json({error:"Invalid URL"},{status:400});}const originalHost=input.hostname.toLowerCase();const isBol=originalHost.includes("bol.com");let direct={},finalUrl=u,directError="";try{const {text:html,url}=await fetchPage(u);finalUrl=url;const host=new URL(url).hostname.toLowerCase();direct=merge(ldProduct(html),openGraph(html));direct=merge(direct,embedded(html));if(isBol){direct.title=bolTitle(html,url)||direct.title;direct.price=direct.price||bolPrice(html);if(badBolImage(direct.image))direct.image="";direct.image=direct.image||firstBolImage(html);}if(host.includes("amazon."))direct=merge(direct,amazon(html));}catch(e){directError=e?.message||"direct fetch failed";}let data=direct;if(isBol){if(badTitle(data.title))data.title="";if(badBolImage(data.image))data.image="";if(!data.title)data.title=titleFromUrl(u);if(!data.image||!data.title||!data.price){try{const micro=await fetchMicrolink(u);if(!data.title&&micro.title)data.title=micro.title;if(!data.price&&micro.price)data.price=micro.price;if(!data.image&&micro.image&&!badBolImage(micro.image))data.image=micro.image;}catch{}}if(!data.image||!data.price){try{const proxied=await fetchBolViaProxy(u);if(!data.title&&proxied.title)data.title=proxied.title;if(!data.price&&proxied.price)data.price=proxied.price;if(!data.image&&proxied.image&&!badBolImage(proxied.image))data.image=proxied.image;}catch{}}if(!data.image||!data.price){try{const reader=await fetchBolReader(u);if(!data.price&&reader.price)data.price=reader.price;if(!data.image&&reader.image&&!badBolImage(reader.image))data.image=reader.image;if(!data.title&&reader.title)data.title=reader.title;}catch(e){if(!directError)directError=e?.message||"bol fallback failed";}}if(badTitle(data.title))data.title=titleFromUrl(u);if(badBolImage(data.image))data.image="";}const host=(()=>{try{return new URL(finalUrl).hostname.toLowerCase();}catch{return originalHost;}})();const source=isBol?"bol":host.includes("amazon.")?"amazon":host.includes("intertoys.")?"intertoys":host.includes("hema.")?"hema":"generic";if(!data.title&&!data.price&&!data.image)return Response.json({error:`Productgegevens konden niet worden opgehaald${directError?`: ${directError}`:""}`},{status:502});return Response.json({...data,source,domain:host});};
