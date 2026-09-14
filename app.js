@@ -72,7 +72,7 @@ function persistAdminLogin(){
 
 async function loadCentralState(){
   try{
-    const response=await fetch("/.netlify/functions/dream-data",{cache:"no-store"});
+    const response=await fetch(`/.netlify/functions/dream-data?t=${Date.now()}`,{cache:"no-store",headers:{"Cache-Control":"no-cache"}});
     if(!response.ok)throw new Error("Central storage unavailable");
     const payload=await response.json();
     const visitorEl=document.getElementById("unique-visitor-count");
@@ -778,6 +778,11 @@ document.getElementById("cancel-settings-btn").addEventListener("click",()=>{
   show("home");
 });
 document.getElementById("save-settings-btn").addEventListener("click",async()=>{
+  const button=document.getElementById("save-settings-btn");
+  const originalText=button.textContent;
+  button.disabled=true;
+  button.textContent="Opslaan…";
+
   syncSettingsFormToDraft();
 
   if(settingsDraft){
@@ -796,7 +801,16 @@ document.getElementById("save-settings-btn").addEventListener("click",async()=>{
   renderSettingsWishList();
   renderSettingsContributions();
   show("settings");
-  setTimeout(()=>toast("Wijzigingen opgeslagen!",true),120);
+
+  if(synced){
+    button.textContent="Opgeslagen ✓";
+    toast("Opgeslagen — wijzigingen staan direct live",true);
+    setTimeout(()=>{button.textContent=originalText;button.disabled=false;},1600);
+  }else{
+    button.textContent="Niet online opgeslagen";
+    toast("Online opslaan is niet gelukt");
+    setTimeout(()=>{button.textContent=originalText;button.disabled=false;},2200);
+  }
 });
 const confirmOverlay=document.getElementById("confirm-overlay");
 const confirmModal=document.getElementById("confirm-modal");
@@ -1445,7 +1459,30 @@ function startConfetti(){
   const draw=()=>{ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.a+=.08;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.fillStyle=p.c;ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);ctx.restore();if(p.y>h+20){p.y=-20;p.x=Math.random()*w}});confettiAnim=requestAnimationFrame(draw)};draw();setTimeout(stopConfetti,4200)
 }
 function stopConfetti(){if(confettiAnim)cancelAnimationFrame(confettiAnim);confettiAnim=null}
-normalizeGoalOrder();save();render();setAmount(20);loadCentralState();
+async function bootDroompot(){
+  normalizeGoalOrder();
+  setAmount(20);
+  const loaded=await loadCentralState();
+  if(!loaded){
+    save();
+    render();
+  }
+}
+bootDroompot();
+
+let lastPublicRefresh=0;
+async function refreshPublicState(){
+  if(isAdminLoggedIn() || settingsDraft)return;
+  const now=Date.now();
+  if(now-lastPublicRefresh<1500)return;
+  lastPublicRefresh=now;
+  await loadCentralState();
+}
+window.addEventListener("pageshow",refreshPublicState);
+window.addEventListener("focus",refreshPublicState);
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden)refreshPublicState();
+});
 
 function maybeShowDemoNotice(){
   const overlay=document.getElementById("demo-notice-overlay");
