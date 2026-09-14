@@ -7,7 +7,7 @@ const VISITOR_KEY = "visitors";
 const INITIAL_DATA = {
   childName: "Noï", birthDate: "2024-09-26", theme: "green", photo: "", activeGoal: 0,
   wishes: [
-    {id:1,title:"LEGO Creator set",price:39.99,link:"https://www.lego.com",note:"${state.childName} vindt voertuigen heel leuk",emoji:"🧱",claimed:false},
+    {id:1,title:"LEGO Creator set",price:39.99,link:"https://www.lego.com",note:"Noï vindt voertuigen heel leuk",emoji:"🧱",claimed:false},
     {id:2,title:"Voetbal",price:24.95,link:"",note:"Maat 5",emoji:"⚽",claimed:false},
     {id:3,title:"Kinderboek over ruimte",price:17.50,link:"",note:"Een mooi boek om samen te lezen",emoji:"🚀",claimed:true},
     {id:4,title:"Dagje dierentuin",price:0,link:"",note:"Een ervaring is ook een cadeau",emoji:"🦁",claimed:false}
@@ -33,8 +33,8 @@ function json(data, status = 200) {
 }
 
 function adminOk(req) {
-  const expectedUser = process.env.ADMIN_USERNAME;
-  const expectedPassword = process.env.ADMIN_PASSWORD;
+  const expectedUser = Netlify.env.get("ADMIN_USERNAME");
+  const expectedPassword = Netlify.env.get("ADMIN_PASSWORD");
   return Boolean(expectedUser && expectedPassword &&
     req.headers.get("x-dream-user") === expectedUser &&
     req.headers.get("x-dream-password") === expectedPassword);
@@ -45,7 +45,7 @@ function safeText(value, max=500) {
 }
 
 export default async (req) => {
-  const store = getStore({name:STORE, consistency:"strong"});
+  const store = getStore(STORE,{consistency:"strong"});
 
   if (req.method === "GET") {
     let [data, visitors] = await Promise.all([
@@ -55,10 +55,6 @@ export default async (req) => {
     if (!data) {
       data = structuredClone(INITIAL_DATA);
       await store.setJSON(DATA_KEY,data);
-      try {
-        const oldStore=getStore({name:"droompot-data", consistency:"strong"});
-        await oldStore.delete("main");
-      } catch {}
     }
     return json({data, uniqueVisitors:Array.isArray(visitors?.ids)?visitors.ids.length:0});
   }
