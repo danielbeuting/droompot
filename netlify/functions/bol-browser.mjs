@@ -1,0 +1,92 @@
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
+
+function shortTitle(value=""){
+  const words=String(value).replace(/\s+/g," ").trim().split(" ").filter(Boolean);
+  return words.slice(0,8).join(" ");
+}
+
+function isBolUrl(value){
+  try{return /(^|\.)bol\.com$/i.test(new URL(value).hostname);}catch{return false;}
+}
+
+async function extractBol(url){
+  let browser;
+  try{
+    browser=await puppeteer.launch({
+      args:[...chromium.args,"--lang=nl-NL"],
+      defaultViewport:{width:1365,height:900},
+      executablePath:await chromium.executablePath(),
+      headless:chromium.headless
+    });
+    const page=await browser.newPage();
+    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36");
+    await page.setExtraHTTPHeaders({"Accept-Language":"nl-NL,nl;q=0.9,en;q=0.7"});
+    await page.goto(url,{waitUntil:"domcontentloaded",timeout:18000});
+    await new Promise(r=>setTimeout(r,1800));
+
+    const data=await page.evaluate(()=>{
+      const body=(document.body?.innerText||"").replace(/\s+/g," ");
+      const title=(document.querySelector("h1")?.textContent||document.title||"").trim();
+      let price="";
+
+      const nodes=[...document.querySelectorAll('[data-test*="price"], [class*="price"]')];
+      for(const el of nodes){
+        const text=(el.textContent||"").replace(/\s+/g," ").trim();
+        const m=text.match(/(?:€\s*)?(\d{1,5})[,.](\d{2})/);
+        if(m){price=`${m[1]}.${m[2]}`;break;}
+      }
+      if(!price){
+        const m=body.match(/De prijs van dit product is\s*(\d{1,5})\s*euro(?:\s*en\s*(\d{1,2})\s*cent)?/i);
+        if(m)price=`${m[1]}.${String(m[2]||"00").padStart(2,"0")}`;
+      }
+      if(!price){
+        const m=body.match(/(?:Prijsinformatie en bestellen|Prijs)[\s\S]{0,500}?(\d{1,5})[,.](\d{2})/i);
+        if(m)price=`${m[1]}.${m[2]}`;
+      }
+
+      const bad=/(logo|icon|sprite|avatar|placeholder|badge|favicon|brand|header|footer|payment|service|usp|newsletter|banner)/i;
+      const titleWords=title.toLowerCase().split(/\s+/).filter(w=>w.length>3).slice(0,6);
+      const images=[...document.images].map(img=>({
+        src:img.currentSrc||img.src||"",
+        alt:img.alt||"",
+        w:img.naturalWidth||img.width||0,
+        h:img.naturalHeight||img.height||0
+      })).filter(x=>/media\.s-bol\.com/i.test(x.src)&&!bad.test(x.src));
+
+      const score=x=>{
+        let n=0;
+        if(x.w>=500||x.h>=500)n+=50;
+        if(x.w>=900||x.h>=900)n+=30;
+        const a=x.alt.toLowerCase();
+        n+=titleWords.filter(w=>a.includes(w)).length*25;
+        if(/lego|ninjago|wyldfyre|product/i.test(a))n+=25;
+        return n;
+      };
+      images.sort((a,b)=>score(b)-score(a));
+      return {title,price,image:images[0]?.src||""};
+    });
+
+    return {...data,title:shortTitle(data.title)};
+  } finally {
+    try{await browser?.close();}catch{}
+  }
+}
+
+export default async (req) => {
+  const target=new URL(req.url).searchParams.get("url")||"";
+  if(!target) return Response.json({error:"URL ontbreekt"},{status:400});
+
+  if(!isBolUrl(target)){
+    const fallback=new URL("/.netlify/functions/product-metadata",req.url);
+    fallback.searchParams.set("url",target);
+    return fetch(fallback,{headers:{"Cache-Control":"no-cache"}});
+  }
+
+  try{
+    const result=await extractBol(target);
+    return Response.json(result,{headers:{"Cache-Control":"no-store"}});
+  }catch(err){
+    return Response.json({error:err?.message||"Bol-browser mislukt"},{status:502});
+  }
+};
