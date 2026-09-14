@@ -1,0 +1,63 @@
+name: Route Bol links to external image lookup
+on:
+  push:
+    paths:
+      - '.github/workflows/v17-bol-external-image.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch frontend Bol flow
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('app.js')
+          s=p.read_text()
+          old='const endpoint=`/api/product-metadata?url=${encodeURIComponent(url)}`;'
+          new='const isBolLink=/^(?:https?:\\/\\/)?(?:www\\.)?bol\\.com\\//i.test(url);\n    const endpoint=`${isBolLink?"/api/bol-external":"/api/product-metadata"}?url=${encodeURIComponent(url)}`;'
+          if old not in s:
+            raise SystemExit('metadata endpoint line not found')
+          s=s.replace(old,new,1)
+          old2='''    if(!missing.length){
+      status.textContent="Naam, prijs en productfoto zijn ingevuld.";
+      toast("Productgegevens opgehaald",true);
+    }else{
+      status.textContent=`Niet alles gevonden. Ontbreekt nog: ${missing.join(", ")}.`;
+      toast("Productgegevens deels opgehaald");
+    }'''
+          new2='''    if(isBolLink){
+      if(title&&image){
+        status.textContent="Naam en productfoto zijn ingevuld. Vul de actuele prijs zelf in.";
+        toast("Naam en foto opgehaald",true);
+      }else{
+        const bolMissing=[];
+        if(!title)bolMissing.push("naam");
+        if(!image)bolMissing.push("foto");
+        status.textContent=`Bol blokkeert directe uitlezing. Ontbreekt nog: ${bolMissing.join(", ")}. Prijs vul je zelf in.`;
+        toast("Bol-gegevens deels opgehaald");
+      }
+    }else if(!missing.length){
+      status.textContent="Naam, prijs en productfoto zijn ingevuld.";
+      toast("Productgegevens opgehaald",true);
+    }else{
+      status.textContent=`Niet alles gevonden. Ontbreekt nog: ${missing.join(", ")}.`;
+      toast("Productgegevens deels opgehaald");
+    }'''
+          if old2 not in s:
+            raise SystemExit('metadata status block not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+      - name: Syntax check
+        run: node --check app.js
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app.js
+          git commit -m 'Use external image lookup for Bol and manual price'
+          git push origin main
