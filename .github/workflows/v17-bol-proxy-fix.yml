@@ -1,0 +1,53 @@
+name: Fix Droompot Bol proxy fallback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v17-bol-proxy-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Patch Bol metadata fallback
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('netlify/functions/product-metadata.mjs')
+          s=p.read_text()
+
+          old='function safeTitle(v=""){const t=clean(v).replace(/\\s*\\|\\s*bol(?:\\.com)?.*$/i,\'\').replace(/\\s*-\\s*bol(?:\\.com)?.*$/i,\'\');return badTitle(t)?"":t;}'
+          new='function safeTitle(v=""){let t=clean(v).replace(/\\s*\\|\\s*bol(?:\\.com)?.*$/i,\'\').replace(/\\s*-\\s*bol(?:\\.com)?.*$/i,\'\');if(badTitle(t))return "";const words=t.split(/\\s+/).filter(Boolean);if(words.length>8)t=words.slice(0,8).join(" ");return t;}'
+          if old not in s:
+              raise SystemExit('safeTitle block not found')
+          s=s.replace(old,new,1)
+
+          marker='async function fetchMicrolink(url){'
+          helper='''async function fetchBolViaProxy(url){\n  const proxies=[\n    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,\n    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`\n  ];\n  for(const proxy of proxies){\n    try{\n      const {text}=await fetchText(proxy,{timeout:15000,headers:{"Accept":"text/html,application/xhtml+xml","Accept-Language":"nl-NL,nl;q=0.9"}});\n      if(/ip address .* is blocked|access denied|forbidden|captcha|robot check/i.test(text))continue;\n      const title=bolTitle(text,url);\n      const priceValue=bolPrice(text);\n      const image=firstBolImage(text);\n      if(title||priceValue||image)return {title,price:priceValue,image};\n    }catch{}\n  }\n  return {};\n}\n'''
+          if 'async function fetchBolViaProxy' not in s:
+              if marker not in s:
+                  raise SystemExit('Microlink marker not found')
+              s=s.replace(marker,helper+marker,1)
+
+          old='''if(!data.image||!data.price){try{const reader=await fetchBolReader(u);if(!data.price&&reader.price)data.price=reader.price;if(!data.image&&reader.image&&!badBolImage(reader.image))data.image=reader.image;if(!data.title&&reader.title)data.title=reader.title;}catch(e){if(!directError)directError=e?.message||"bol fallback failed";}}'''
+          new='''if(!data.image||!data.price){try{const proxied=await fetchBolViaProxy(u);if(!data.title&&proxied.title)data.title=proxied.title;if(!data.price&&proxied.price)data.price=proxied.price;if(!data.image&&proxied.image&&!badBolImage(proxied.image))data.image=proxied.image;}catch{}}if(!data.image||!data.price){try{const reader=await fetchBolReader(u);if(!data.price&&reader.price)data.price=reader.price;if(!data.image&&reader.image&&!badBolImage(reader.image))data.image=reader.image;if(!data.title&&reader.title)data.title=reader.title;}catch(e){if(!directError)directError=e?.message||"bol fallback failed";}}'''
+          if old not in s:
+              raise SystemExit('reader fallback block not found')
+          s=s.replace(old,new,1)
+
+          p.write_text(s)
+          PY
+          node --check netlify/functions/product-metadata.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add netlify/functions/product-metadata.mjs
+          git commit -m "Add Bol proxy fallback and cap product names"
+          git push origin main
