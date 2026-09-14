@@ -1111,7 +1111,7 @@ async function fetchProductMetadata(){
   async function getLocalMetadata(){
     const endpoint=`/api/product-metadata?url=${encodeURIComponent(url)}`;
     const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),15000);
+    const timer=setTimeout(()=>controller.abort(),30000);
     try{
       const res=await fetch(endpoint,{signal:controller.signal,cache:"no-store"});
       if(!res.ok){
