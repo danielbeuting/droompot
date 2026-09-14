@@ -1,0 +1,1 @@
+Redeploy Droompot v1.7 after local Chromium setup
