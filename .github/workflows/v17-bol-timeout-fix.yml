@@ -1,0 +1,97 @@
+name: Fix Droompot Bol timeout regression
+on:
+  push:
+    paths:
+      - '.github/workflows/v17-bol-timeout-fix.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch frontend and Bol metadata flow
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          app_path=Path('app.js')
+          app=app_path.read_text()
+          old='''    const timer=setTimeout(()=>controller.abort(),15000);\n    try{\n      const res=await fetch(endpoint,{signal:controller.signal,cache:"no-store"});'''
+          new='''    const timer=setTimeout(()=>controller.abort(),30000);\n    try{\n      const res=await fetch(endpoint,{signal:controller.signal,cache:"no-store"});'''
+          if old not in app:
+              raise SystemExit('frontend metadata timeout block not found')
+          app=app.replace(old,new,1)
+          app=app.replace('''    console.error(err);\n    status.textContent=err?.message||"Ophalen lukte niet.";\n    toast("Productgegevens ophalen mislukt");''','''    console.error(err);\n    const timedOut=err?.name==="AbortError" || /aborted/i.test(err?.message||"");\n    status.textContent=timedOut?"Ophalen duurde te lang. Probeer het nog een keer.":(err?.message||"Ophalen lukte niet.");\n    toast(timedOut?"Ophalen duurde te lang":"Productgegevens ophalen mislukt");''',1)
+          app_path.write_text(app)
+
+          p=Path('netlify/functions/product-metadata.mjs')
+          s=p.read_text()
+          s=s.replace('timeout:12000,headers:{"User-Agent"','timeout:6000,headers:{"User-Agent"',1)
+          s=s.replace('fetchText(`https://r.jina.ai/${url}`,{timeout:18000','fetchText(`https://r.jina.ai/${url}`,{timeout:9000',1)
+          s=s.replace('fetchText(api,{timeout:18000','fetchText(api,{timeout:9000',1)
+
+          proxy_pattern=r'''async function fetchBolViaProxy\(url\)\{[\s\S]*?\n\}\nasync function fetchMicrolink'''
+          proxy_repl='''async function fetchBolViaProxy(url){
+  const proxies=[
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+  ];
+  const attempts=await Promise.allSettled(proxies.map(proxy=>fetchText(proxy,{timeout:9000,headers:{"Accept":"text/html,application/xhtml+xml","Accept-Language":"nl-NL,nl;q=0.9"}})));
+  const candidates=[];
+  for(const attempt of attempts){
+    if(attempt.status!=="fulfilled")continue;
+    const text=attempt.value.text||"";
+    if(/ip address .* is blocked|access denied|forbidden|captcha|robot check/i.test(text))continue;
+    const candidate={title:bolTitle(text,url),price:bolPrice(text),image:firstBolImage(text)};
+    if(candidate.title||candidate.price||candidate.image)candidates.push(candidate);
+  }
+  candidates.sort((a,b)=>(Boolean(b.price)+Boolean(b.image)+Boolean(b.title))-(Boolean(a.price)+Boolean(a.image)+Boolean(a.title)));
+  return candidates[0]||{};
+}
+async function fetchMicrolink'''
+          s,n=re.subn(proxy_pattern,proxy_repl,s,count=1)
+          if n!=1:
+              raise SystemExit('proxy function replacement failed')
+
+          bol_pattern=r'''let data=direct;if\(isBol\)\{[\s\S]*?\}const host=\(\(\)=>\{'''
+          bol_repl='''let data=direct;if(isBol){
+    if(badTitle(data.title))data.title="";
+    if(badBolImage(data.image))data.image="";
+    if(!data.title)data.title=safeTitle(titleFromUrl(u));
+
+    if(!data.price||!data.image){
+      const fallbackResults=await Promise.allSettled([
+        fetchMicrolink(u),
+        fetchBolViaProxy(u),
+        fetchBolReader(u)
+      ]);
+      const candidates=fallbackResults.filter(r=>r.status==="fulfilled").map(r=>r.value||{});
+      for(const candidate of candidates){
+        if(!data.title&&candidate.title&&!badTitle(candidate.title))data.title=safeTitle(candidate.title);
+        if(!data.price&&candidate.price&&candidate.price!=="0.00")data.price=candidate.price;
+        if(!data.image&&candidate.image&&!badBolImage(candidate.image))data.image=candidate.image;
+      }
+    }
+    if(badTitle(data.title))data.title=safeTitle(titleFromUrl(u));
+    if(badBolImage(data.image))data.image="";
+    data.title=safeTitle(data.title);
+  }const host=(()=>{'''
+          s,n=re.subn(bol_pattern,bol_repl,s,count=1)
+          if n!=1:
+              raise SystemExit('Bol main-flow replacement failed')
+          p.write_text(s)
+      - name: Syntax check
+        run: |
+          node --check app.js
+          node --check netlify/functions/product-metadata.mjs
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app.js netlify/functions/product-metadata.mjs
+          git commit -m 'Fix Bol metadata timeout and parallelize fallbacks'
+          git push origin main
