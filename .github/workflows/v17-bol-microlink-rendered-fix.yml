@@ -1,0 +1,105 @@
+name: Improve Droompot Bol rendered metadata
+on:
+  push:
+    paths:
+      - '.github/workflows/v17-bol-microlink-rendered-fix.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch Bol rendered metadata extraction
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p=Path('netlify/functions/product-metadata.mjs')
+          s=p.read_text()
+
+          pattern=r'''async function fetchMicrolink\(url\)\{[\s\S]*?\n\nexport default async'''
+          replacement=r'''async function fetchMicrolink(url){
+  const base=new URL("https://api.microlink.io/");
+  base.searchParams.set("url",url);
+  base.searchParams.set("meta","true");
+  base.searchParams.set("prerender","true");
+  base.searchParams.set("waitUntil","networkidle2");
+  base.searchParams.set("data.rendered.evaluate",`async () => {
+    const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+    await sleep(1200);
+    const body=(document.body?.innerText||"").replace(/\\s+/g," ");
+    const heading=(document.querySelector("h1")?.textContent||document.title||"").trim();
+    let price="";
+    let m=body.match(/De prijs van dit product is\\s*(\\d{1,5})\\s*euro(?:\\s*en\\s*(\\d{1,2})\\s*cent)?/i);
+    if(m) price=m[1]+"."+String(m[2]||"00").padStart(2,"0");
+    if(!price){
+      m=body.match(/Prijsinformatie en bestellen[\\s\\S]{0,350}?(\\d{1,5}[,.]\\d{2})/i);
+      if(m) price=m[1].replace(",",".");
+    }
+    if(!price){
+      const priceNode=[...document.querySelectorAll('[data-test*="price"], [class*="price"]')]
+        .map(el=>(el.textContent||"").trim())
+        .find(v=>/\\d{1,5}[,.]\\d{2}/.test(v));
+      const pm=priceNode?.match(/(\\d{1,5}[,.]\\d{2})/);
+      if(pm) price=pm[1].replace(",",".");
+    }
+
+    const bad=/(logo|icon|sprite|avatar|placeholder|badge|favicon|brand|header|footer|payment|service|usp|newsletter|bol-com|bol_logo)/i;
+    const titleWords=heading.toLowerCase().split(/\\s+/).filter(w=>w.length>3);
+    const images=[...document.images].map(img=>({
+      src:img.currentSrc||img.src||"",
+      alt:img.alt||"",
+      w:img.naturalWidth||img.width||0,
+      h:img.naturalHeight||img.height||0
+    })).filter(x=>/media\\.s-bol\\.com/i.test(x.src)&&!bad.test(x.src));
+    const score=x=>{
+      let n=0;
+      if(x.w>=400||x.h>=400)n+=40;
+      if(x.w>=800||x.h>=800)n+=25;
+      const a=x.alt.toLowerCase();
+      n+=titleWords.slice(0,5).filter(w=>a.includes(w)).length*20;
+      if(/product afbeelding|lego|ninjago|wyldfyre/i.test(a))n+=30;
+      if(/speciaal in het zonnetje|actie|banner/i.test(a))n-=100;
+      return n;
+    };
+    images.sort((a,b)=>score(b)-score(a));
+    return JSON.stringify({title:heading,price,image:images[0]?.src||""});
+  }`);
+
+  const {text}=await fetchText(base.toString(),{timeout:12000,headers:{"Accept":"application/json"}});
+  const j=JSON.parse(text);
+  const d=j?.data||{};
+  let extra={};
+  const raw=d.rendered;
+  try{
+    if(typeof raw==="string")extra=JSON.parse(raw);
+    else if(typeof raw?.value==="string")extra=JSON.parse(raw.value);
+    else if(raw&&typeof raw==="object")extra=raw;
+  }catch{}
+
+  const imageMeta=typeof d.image==="string"?d.image:(d.image?.url||"");
+  const title=safeTitle(extra.title||d.title||"");
+  const p=price(extra.price||d.price||d.description||"");
+  let image=clean(extra.image||imageMeta||"");
+  if(badBolImage(image))image="";
+  return {title,price:p,image};
+}
+
+export default async'''
+          s,n=re.subn(pattern,replacement,s,count=1)
+          if n!=1:
+              raise SystemExit('fetchMicrolink replacement failed')
+          p.write_text(s)
+      - name: Syntax check
+        run: node --check netlify/functions/product-metadata.mjs
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add netlify/functions/product-metadata.mjs
+          git commit -m 'Use rendered Bol page extraction for price and product image'
+          git push origin main
