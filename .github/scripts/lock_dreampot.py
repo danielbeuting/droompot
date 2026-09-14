@@ -4,6 +4,7 @@ from pathlib import Path
 p = Path('index.html')
 s = p.read_text()
 s = s.replace('<strong>Ga naar Droompot</strong>\n              <small>Bekijk spaardoelen en draag bij</small>', '<strong>🔒 Ga naar Droompot</strong>\n              <small>Alleen toegankelijk met pincode</small>')
+s = s.replace('<strong>Ga naar Droompot</strong>\n          <small>Bekijk spaardoelen en draag bij</small>', '<strong>🔒 Ga naar Droompot</strong>\n          <small>Alleen toegankelijk met pincode</small>')
 p.write_text(s)
 
 # Gate all routes to screen-home with PIN 0112 for the browser session.
@@ -34,9 +35,9 @@ document.querySelectorAll("[data-back]").forEach(b=>b.addEventListener("click",(
   if(b.dataset.back==="home"&&!requestDreamAccess())return;
   show(b.dataset.back);
 }));'''
-if marker not in s:
-    raise SystemExit('show/back marker not found')
-s = s.replace(marker, replacement, 1)
+if marker in s:
+    s = s.replace(marker, replacement, 1)
+
 old = '''document.getElementById("start-dream-btn").addEventListener("click",()=>{show("home");setTimeout(showDemoNoticeOnce,120)});
 document.getElementById("start-wishlist-btn").addEventListener("click",async()=>{show("wishlist");await refreshWishlistFromCentral()});
 document.getElementById("home-wishlist-btn").addEventListener("click",async()=>{show("wishlist");await refreshWishlistFromCentral()});
@@ -45,7 +46,6 @@ new = '''document.getElementById("start-dream-btn").addEventListener("click",ope
 document.getElementById("start-wishlist-btn").addEventListener("click",async()=>{show("wishlist");await refreshWishlistFromCentral()});
 document.getElementById("home-wishlist-btn").addEventListener("click",async()=>{show("wishlist");await refreshWishlistFromCentral()});
 document.getElementById("wishlist-dreampot-btn").addEventListener("click",openLockedDream);'''
-if old not in s:
-    raise SystemExit('dream navigation block not found')
-s = s.replace(old, new, 1)
+if old in s:
+    s = s.replace(old, new, 1)
 p.write_text(s)
