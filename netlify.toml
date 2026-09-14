@@ -8,5 +8,5 @@
 
 [[redirects]]
   from = "/api/product-metadata"
-  to = "/.netlify/functions/product-metadata"
+  to = "/.netlify/functions/bol-browser"
   status = 200
